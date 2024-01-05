@@ -74,7 +74,6 @@ void GetPossibleArrangements(List<char[]> possibles, char[] record, int i)
 bool IsFeasibleArrangement(char[] record, int[] counts)
 {
     int currentCount = 0;
-    char prevC = '.';
 
     int checkIndex = 0;
     int i = 0;

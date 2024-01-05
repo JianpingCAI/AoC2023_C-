@@ -1,18 +1,11 @@
 ﻿using System.Diagnostics;
-
-record Pos(long x, long y, long z)
-{
-    internal Pos Add(Pos p)
-    {
-        return new Pos(p.x + x, p.y + y, p.z + z);
-    }
-}
+using Vec3DRecord = AocLib.DataTypes.Vec3DRecord<long>;
 
 record V(int x, int y, int z)
 {
-    internal Pos Multiple(long t)
+    internal Vec3DRecord Multiple(long t)
     {
-        return new Pos(x * t, y * t, z * t);
+        return new Vec3DRecord(x * t, y * t, z * t);
     }
 
     internal V Minus(V v0)
@@ -21,18 +14,19 @@ record V(int x, int y, int z)
     }
 }
 
-record Data(Pos s, V v);
+record Data(Vec3DRecord s, V v);
 
 internal class Solver
 {
-    public static (Pos?, bool isFuture) CalculateIntersectPos(Pos s1, V v1, Pos s2, V v2)
+    public static (Vec3DRecord?, bool isFuture) CalculateIntersectPos(Vec3DRecord s1, V v1, Vec3DRecord s2, V v2)
     {
         // solve for t1
-        Pos S = new(s2.x - s1.x, s2.y - s1.y, 0);
+        Vec3DRecord S = new(s2.x - s1.x, s2.y - s1.y, 0);
         var tmp = v1.x * v2.y - v1.y * v2.x;
         var t1 = (v2.y * S.x - v2.x * S.y) / tmp;
 
-        Pos interSectPos = s1.Add(v1.Multiple(t1));
+        Vec3DRecord interSectPos = s1 + (v1.Multiple(t1));
+
         return (interSectPos, true);
     }
 }
@@ -54,7 +48,7 @@ internal class Program
             long[] s = arr[0].Split(',', StringSplitOptions.TrimEntries).Select(long.Parse).ToArray();
             int[] v = arr[1].Split(',', StringSplitOptions.TrimEntries).Select(int.Parse).ToArray();
 
-            dataList.Add(new Data(new Pos(s[0], s[1], s[2]), new V(v[0], v[1], v[2])));
+            dataList.Add(new Data(new Vec3DRecord(s[0], s[1], s[2]), new V(v[0], v[1], v[2])));
         }
 
         SortedSet<int> prevSetX = GetCommon(dataList, 'x');
@@ -69,13 +63,13 @@ internal class Program
         Console.WriteLine(prevSetZ.Count);
         Console.WriteLine(prevSetZ.Min());
 
-        (Pos? startPos, bool isFuture) = GetStartPos(dataList, new V(prevSetX.First(), prevSetY.First(), prevSetZ.First()));
+        (Vec3DRecord? startPos, bool isFuture) = GetStartPos(dataList, new V(prevSetX.First(), prevSetY.First(), prevSetZ.First()));
 
         long result = 0;
 
         if (isFuture)
         {
-            result = startPos.x + startPos.y + startPos.z;
+            result = (startPos.x + startPos.y + startPos.z);
             Console.WriteLine($"{startPos}");
         }
 
@@ -86,12 +80,12 @@ internal class Program
         Console.WriteLine($"Time = {sw.Elapsed.TotalSeconds} seconds");
     }
 
-    private static (Pos?, bool isFuture) GetStartPos(List<Data> dataList, V V0)
+    private static (Vec3DRecord?, bool isFuture) GetStartPos(List<Data> dataList, V V0)
     {
         SortedSet<long> prevSet = [];
 
-        Pos s1 = dataList[0].s;
-        Pos s2 = dataList[1].s;
+        Vec3DRecord s1 = dataList[0].s;
+        Vec3DRecord s2 = dataList[1].s;
 
         V v1 = dataList[0].v;
         v1 = v1.Minus(V0);
@@ -154,8 +148,8 @@ internal class Program
         {
             if (item.Value.Count >= 2)
             {
-                Pos s1 = item.Value[0].s;
-                Pos s2 = item.Value[1].s;
+                Vec3DRecord s1 = item.Value[0].s;
+                Vec3DRecord s2 = item.Value[1].s;
 
                 long s1v = 0;
                 long s2v = 0;

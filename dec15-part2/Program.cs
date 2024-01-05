@@ -11,7 +11,6 @@ internal class Program
         Stopwatch sw = Stopwatch.StartNew();
 
         long result = 0;
-        bool isPrint = false;
 
         OrderedDictionary[] dict_label_focal = new OrderedDictionary[256];
         for (int b = 0; b < 256; b++)

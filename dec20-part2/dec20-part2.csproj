@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AocMath\AocMath.csproj" />
+    <ProjectReference Include="..\AocMath\AocLib.csproj" />
   </ItemGroup>
 
   <ItemGroup>

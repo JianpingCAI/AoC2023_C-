@@ -1,4 +1,4 @@
-﻿using AocMath;
+﻿using AocLib.AocMath;
 
 public class ModuleSystem
 {

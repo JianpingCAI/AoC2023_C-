@@ -1,4 +1,4 @@
-﻿namespace AocMath
+﻿namespace AocLib.AocMath
 {
     public static class IntegerTypeConstraint
     {

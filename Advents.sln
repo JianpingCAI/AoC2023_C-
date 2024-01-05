@@ -36,7 +36,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "dec7-part1", "dec7-part1\de
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "dec7-part2", "dec7-part2\dec7-part2.csproj", "{48D22317-72DB-4B84-AB1E-6C691E70FEA2}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Archived", "Archived", "{30DE1BBD-BD4B-41E1-B38F-8CD678598542}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2023", "2023", "{30DE1BBD-BD4B-41E1-B38F-8CD678598542}"
 	ProjectSection(SolutionItems) = preProject
 		day21-part2cpp\day21-part2cpp.cpp = day21-part2cpp\day21-part2cpp.cpp
 	EndProjectSection
@@ -117,7 +117,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "dec22-part2", "dec22-part2\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "day23-part2-cpp", "day23-part2-cpp\day23-part2-cpp.vcxproj", "{623896E3-5559-426D-A52E-239FFFF73B4E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AocMath", "AocMath\AocMath.csproj", "{2D73097F-9B67-4D2A-A0CE-BD6DA80BEBBC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AocLib", "AocMath\AocLib.csproj", "{2D73097F-9B67-4D2A-A0CE-BD6DA80BEBBC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "day21-part2-cpp", "day21-part2cpp\day21-part2cpp.vcxproj", "{D33FBF74-A034-4EA0-BA0A-44CA9AB1FF11}"
 EndProject
