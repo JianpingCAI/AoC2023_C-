@@ -82,6 +82,7 @@ internal class Program
             curWorkflowTarget = GetWorkflowTarget(record, curWorkflow);
         }
 
+        // the record is accepted
         if (curWorkflowTarget == "A")
         {
             return record.a + record.m + record.s + record.x;
@@ -167,10 +168,11 @@ internal class Program
     private static Dictionary<string, Workflow> ParseWorkflowRules(List<string> rawWorkflows)
     {
         Dictionary<string, Workflow> dict_label_workflows = [];
+        char[] separator = ['{', '}'];
 
         foreach (string line in rawWorkflows)
         {
-            string[] tmp = line.Split(new char[] { '{', '}' }, StringSplitOptions.RemoveEmptyEntries).ToArray();
+            string[] tmp = line.Split(separator, StringSplitOptions.RemoveEmptyEntries).ToArray();
             string label = tmp[0];
 
             Workflow workflow = ParseWorkflow(tmp[1]);

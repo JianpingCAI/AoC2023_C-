@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 record Pos2D(int X, int Y);
@@ -52,26 +51,24 @@ internal class Program
         int result = CountRemovableBricks(sortedBricks);
 
         sw.Stop();
-        // 459
+
         Console.WriteLine($"Result = {result}");
         Console.WriteLine($"Time = {sw.Elapsed.TotalSeconds} seconds");
     }
 
     private static int CountRemovableBricks(List<Brick> dropedBricks)
     {
-        int result = 0;
+        int countFreeBricks = 0;
         HashSet<string> names = [];
         List<Brick> freeBricks = [];
         foreach (Brick curBrick in dropedBricks)
         {
-            //Console.WriteLine("Brick");
-            //Console.WriteLine($"{curBrick}");
-
+            // no bricks to support
             if (curBrick.UpBricks.Count == 0)
             {
                 //names.Add(curBrick.Name);
                 //Console.WriteLine("** free brick");
-                result++;
+                countFreeBricks++;
 
                 freeBricks.Add(curBrick);
                 continue;
@@ -80,27 +77,27 @@ internal class Program
             if (curBrick.UpBricks.Count > 0)
             {
                 bool canRemoveCurrent = curBrick.UpBricks.All(x => x.DownBricks.Count >= 2);
+                // supported bricks are supported by some other bricks as well
                 if (canRemoveCurrent)
                 {
                     names.Add(curBrick.Name);
-                    result++;
-                    //Console.WriteLine("free brick");
+                    countFreeBricks++;
 
                     freeBricks.Add(curBrick);
                 }
             }
         }
 
-        foreach (var item in freeBricks)
-        {
-            Console.WriteLine($"free: {item}");
-        }
-        //result = names.Count;
-        return result;
+        //foreach (var item in freeBricks)
+        //{
+        //    Console.WriteLine($"free: {item}");
+        //}
+        return countFreeBricks;
     }
 
     private static void DropAllBricks_OneByOne(List<Brick> sortedBricks)
     {
+        // for each (x,y) location, keep the record of the current highest brick
         Dictionary<Pos2D, Brick> dict_pos2D_highestBrick = [];
 
         // drop one by one in z order
@@ -172,20 +169,21 @@ internal class Program
             }
         }
 
+        // do not forget to do this step!!
         foreach (var item in sortedBricks)
         {
             item.UpBricks = item.UpBricks.DistinctBy(x => x.P1).ToList();
             item.DownBricks = item.DownBricks.DistinctBy(x => x.P1).ToList();
         }
 
-        foreach (var item in sortedBricks)
-        {
-            if (item.P1.X == 0 && item.P1.Y == 5 && item.P1.Z == 2)
-            {
-                Console.WriteLine($"Found {item}");
-                break;
-            }
-        }
+        //foreach (var item in sortedBricks)
+        //{
+        //    if (item.P1.X == 0 && item.P1.Y == 5 && item.P1.Z == 2)
+        //    {
+        //        Console.WriteLine($"Found {item}");
+        //        break;
+        //    }
+        //}
     }
 
     private static List<Brick> GenerateAllBricks(string[] lines)
@@ -242,6 +240,9 @@ internal class Program
     /// <summary>
     /// Find highest down bricks
     /// </summary>
+    /// <param name="dict_pos_highestBrick"></param>
+    /// <param name="curBrick"></param>
+    /// <returns></returns>
     private static List<Brick> FindHighestDownBricks(
         Dictionary<Pos2D, Brick> dict_pos_highestBrick,
         Brick curBrick)

@@ -35,16 +35,10 @@ internal class Program
         string[] lines = File.ReadAllLines(filePath);
         Stopwatch sw = Stopwatch.StartNew();
 
-        Dictionary<string, Workflow> dict_label_workflows;
-        List<DataRecord> records;
-        GetData(lines, out dict_label_workflows, out records);
+        GetInputData(lines, out Dictionary<string, Workflow> dict_label_workflows, out List<DataRecord> records);
 
         long result = GetCombinationSum(dict_label_workflows);
 
-        //foreach (DataRecord record in records)
-        //{
-        //    result += GetValidPartSum(record, dict_label_workflows);
-        //}
         sw.Stop();
         Console.WriteLine($"Result = {result}");
         Console.WriteLine($"Time = {sw.Elapsed.TotalSeconds} seconds");
@@ -104,11 +98,11 @@ internal class Program
                         }
                     }
                     // "R"
-                    else
-                    {
-                        // do nothing;
-                        //ignore the condition-path
-                    }
+                    //else
+                    //{
+                    //    // do nothing;
+                    //    //ignore the condition-path
+                    //}
                 }
 
                 // not pass the condition
@@ -155,10 +149,10 @@ internal class Program
 
         // ** step
         long result = 0;
-        foreach (List<Condition> conditions in List_acceptedConditions)
+        foreach (List<Condition> acceptedConditions in List_acceptedConditions)
         {
             // get merged conditions
-            Dictionary<Category, ValidRange> dict_category_range = GetMergedConditions(conditions);
+            Dictionary<Category, ValidRange> dict_category_range = GetMergedConditions(acceptedConditions);
 
             // get combinations
             long count_combinations = GetValidCombinations(dict_category_range);
@@ -166,9 +160,6 @@ internal class Program
             result += count_combinations;
         }
 
-        //233352255800000
-        //167409079868000
-        //167409079868000
         return result;
     }
 
@@ -182,10 +173,10 @@ internal class Program
             {
                 result *= (range.valueEnd - range.valueStart - 1);
             }
-            else
-            {
-                Console.WriteLine("skip");
-            }
+            //else
+            //{
+            //    Console.WriteLine("skip");
+            //}
         }
 
         return result;
@@ -295,10 +286,6 @@ internal class Program
 
                 dict_category_Range[con.Category] = newRange;
             }
-            else
-            {
-                throw new Exception();
-            }
         }
 
         return dict_category_Range;
@@ -311,7 +298,10 @@ internal class Program
         return new Condition(condition.Category, rvOp, rvValue);
     }
 
-    private static void GetData(string[] lines, out Dictionary<string, Workflow> dict_label_workflows, out List<DataRecord> records)
+    private static void GetInputData(
+        string[] lines,
+        out Dictionary<string, Workflow> dict_label_workflows,
+        out List<DataRecord> records)
     {
         bool isWorkflow = true;
 

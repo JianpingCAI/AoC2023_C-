@@ -2,16 +2,17 @@
 
 internal class Program
 {
-    record Dig(char Dir, int Len, string Color);
+    record Dig(char Dir, int Len);
     private static bool _isPrint = false;
     private static int _ROWs;
     private static int _COLs;
     private static int _start_i;
     private static int _start_j;
 
+    // reuse day 10 algorithm
     private static void Main(string[] args)
     {
-        string filePath = "input.txt";
+        string filePath = "input2.txt";
         if (filePath == "input2.txt")
         {
             _isPrint = true;
@@ -29,26 +30,25 @@ internal class Program
 
     private static int DigTrench(List<Dig> digs)
     {
-        int ROWs, COLs;
-        GetTrechSize(digs);
+        GetTrenchSize(digs);
 
         // start from (_start_i, _start_j)
-        int[,] mat = FormTrencMatrix(digs);
+        int[,] mat = FormTrenchMatrix(digs);
 
         //if (_isPrint)
         {
             PrintTrench(mat);
         }
 
-        string[] M = FormShapes(mat);
+        string[] boundShapeMat = FormBoundaryShapes(mat);
 
         //if (_isPrint)
         {
             Console.WriteLine();
-            Print(M);
+            Print(boundShapeMat);
         }
 
-        CorrectByRayCasting(M, mat);
+        FillByRayCasting(boundShapeMat, mat);
 
         int result = CountTrenches(mat);
         //if (_isPrint)
@@ -97,9 +97,9 @@ internal class Program
         return count;
     }
 
-    private static string[] FormShapes(int[,] mat)
+    private static string[] FormBoundaryShapes(int[,] mat)
     {
-        string[] M = new string[_ROWs];
+        string[] shaptMat = new string[_ROWs];
 
         for (int i = 0; i < _ROWs; i++)
         {
@@ -110,10 +110,10 @@ internal class Program
                 rowChars[j] = shape;
             }
 
-            M[i] = new string(rowChars);
+            shaptMat[i] = new string(rowChars);
         }
 
-        return M;
+        return shaptMat;
     }
 
     private static char GetShape(int i, int j, int[,] mat)
@@ -181,12 +181,12 @@ internal class Program
  result: check all non-boundary elements, and set them to 2 if outside the boundary loop.
  */
 
-    private static void CorrectByRayCasting(string[] mat, int[,] bound)
+    private static void FillByRayCasting(string[] boundMat, int[,] mat)
     {
-        int numRows = bound.GetLength(0);
+        int numRows = mat.GetLength(0);
         for (int i = 0; i < numRows; i++)
         {
-            RayCasting(mat, bound, i);
+            RayCasting(boundMat, mat, i);
         }
     }
 
@@ -194,21 +194,21 @@ internal class Program
     ///
     /// </summary>
     /// <param name="shapeM"></param>
-    /// <param name="bound"></param>
-    /// <param name="r">row</param>
-    private static void RayCasting(string[] shapeM, int[,] bound, int r)
+    /// <param name="mat"></param>
+    /// <param name="i">row</param>
+    private static void RayCasting(string[] shapeM, int[,] mat, int i)
     {
         bool isInside = false;
         char prevB = ' ';
         char curB;
 
-        int numColums = bound.GetLength(1);
+        int numColums = mat.GetLength(1);
         for (int j = 0; j < numColums; j++)
         {
             // is bounday
-            if (bound[r, j] == 1)
+            if (mat[i, j] == 1)
             {
-                curB = shapeM[r][j];
+                curB = shapeM[i][j];
                 switch (curB)
                 {
                     case '|':
@@ -247,17 +247,17 @@ internal class Program
                 // set outside as 2
                 if (!isInside)
                 {
-                    bound[r, j] = 2;
+                    mat[i, j] = 2;
                 }
                 else
                 {
-                    bound[r,j] = 1;
+                    mat[i, j] = 1;
                 }
             }
         }
     }
 
-    private static int[,] FormTrencMatrix(List<Dig> digs)
+    private static int[,] FormTrenchMatrix(List<Dig> digs)
     {
         int[,] mat = new int[_ROWs, _COLs];
 
@@ -317,7 +317,7 @@ internal class Program
         return mat;
     }
 
-    private static void GetTrechSize(List<Dig> digs)
+    private static void GetTrenchSize(List<Dig> digs)
     {
         int j = 0;
         int i = 0;
@@ -387,7 +387,7 @@ internal class Program
         for (int i = 0; i < lines.Length; i++)
         {
             List<string> input = lines[i].Split(' ').ToList();
-            digs.Add(new Dig(input[0][0], int.Parse(input[1]), input[2]));
+            digs.Add(new Dig(input[0][0], int.Parse(input[1])));
         }
         return digs;
     }

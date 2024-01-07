@@ -47,16 +47,10 @@ internal class Program
         // the height map
         DropAllBricks_OneByOne(sortedBricks);
 
-        //** step. remove bricks
-        HashSet<Pos3D> freeBrickPosList = GetFreeBrickPosList(sortedBricks);
+        // step. get the locations of free bricks
+        HashSet<Pos3D> freeBrickPosList = GetFreeBrickPositions(sortedBricks);
 
-        Dictionary<Pos3D, bool> state_pos_fall = [];
-        foreach (var item in sortedBricks)
-        {
-            state_pos_fall[item.P1] = false;
-        }
-
-        int result = ChainActions(freeBrickPosList, sortedBricks, state_pos_fall);
+        int result = ChainActions(freeBrickPosList, sortedBricks);
 
         sw.Stop();
         // 459
@@ -64,7 +58,7 @@ internal class Program
         Console.WriteLine($"Time = {sw.Elapsed.TotalSeconds} seconds");
     }
 
-    private static int ChainActions(HashSet<Pos3D> freeBrickPosList, List<Brick> sortedBricks, Dictionary<Pos3D, bool> originState)
+    private static int ChainActions(HashSet<Pos3D> freeBrickPosList, List<Brick> sortedBricks)
 
     {
         sortedBricks.Sort((a, b) => a.P1.Z.CompareTo(b.P1.Z));
@@ -73,7 +67,14 @@ internal class Program
 
         foreach (Brick brick in sortedBricks)
         {
-            var state = SingleChainActioin(brick, freeBrickPosList, originState.ToDictionary());
+            Dictionary<Pos3D, bool> stateDict_pos_isFall = [];
+            foreach (Brick item in sortedBricks)
+            {
+                stateDict_pos_isFall[item.P1] = false;
+            }
+
+            // if a brick removed, check all falled bricks
+            Dictionary<Pos3D, bool> state = SingleChainActioin(brick, freeBrickPosList, stateDict_pos_isFall);
 
             int upFallCount = state.Count(x => x.Value == true);
 
@@ -85,44 +86,55 @@ internal class Program
         return result;
     }
 
+    /// <summary>
+    /// Start from the bottom, if the curBrick removed, check recursively of all the bricks that will fall.
+    /// </summary>
+    /// <param name="curBrick"></param>
+    /// <param name="freeBricks"></param>
+    /// <param name="stateDict_pos_isFall"></param>
+    /// <returns></returns>
     private static Dictionary<Pos3D, bool> SingleChainActioin(
-        Brick curBrick, HashSet<Pos3D> freeBrickPosList,
-        Dictionary<Pos3D, bool> state_pos_fall)
+        Brick curBrick,
+        HashSet<Pos3D> freeBricks,
+        Dictionary<Pos3D, bool> stateDict_pos_isFall)
     {
-        state_pos_fall[curBrick.P1] = true;
+        // current brick fall
+        stateDict_pos_isFall[curBrick.P1] = true;
         if (curBrick.UpBricks.Count == 0)
         {
-            return state_pos_fall;
+            return stateDict_pos_isFall;
         }
 
         // find the upbricks that will fall
-        List<Brick> fallUpBricks = curBrick.UpBricks;
-
-        foreach (var upbrick in fallUpBricks)
+        foreach (Brick upbrick in curBrick.UpBricks)
         {
-            if (IsNoSupportLeft(upbrick, state_pos_fall))
+            // the upbrick that falls
+            if (IsNoSupportForBrick(upbrick, stateDict_pos_isFall))
             {
-                var next_state = SingleChainActioin(upbrick, freeBrickPosList, state_pos_fall.ToDictionary());
-                Merge(next_state, state_pos_fall);
+                // new falled bricks!!!
+                Dictionary<Pos3D, bool> next_state = SingleChainActioin(upbrick, freeBricks, stateDict_pos_isFall.ToDictionary());
+
+                // merge with the current state
+                MergeFallStates(next_state, stateDict_pos_isFall);
             }
         }
 
-        return state_pos_fall;
+        return stateDict_pos_isFall;
     }
 
-    private static void Merge(Dictionary<Pos3D, bool> nextState, Dictionary<Pos3D, bool> curState)
+    private static void MergeFallStates(Dictionary<Pos3D, bool> nextState, Dictionary<Pos3D, bool> curState)
     {
-        foreach (var item in curState)
+        foreach (KeyValuePair<Pos3D, bool> item in curState)
         {
             curState[item.Key] = nextState[item.Key];
         }
     }
 
-    private static bool IsNoSupportLeft(Brick brick, Dictionary<Pos3D, bool> state_pos_fall)
+    private static bool IsNoSupportForBrick(Brick brick, Dictionary<Pos3D, bool> dict_pos_isFall)
     {
-        foreach (var downBrick in brick.DownBricks)
+        foreach (Brick downBrick in brick.DownBricks)
         {
-            if (!state_pos_fall[downBrick.P1])
+            if (!dict_pos_isFall[downBrick.P1])
             {
                 return false;
             }
@@ -131,7 +143,8 @@ internal class Program
         return true;
     }
 
-    private static HashSet<Pos3D> GetFreeBrickPosList(List<Brick> dropedBricks)
+    // get the locations of free bricks
+    private static HashSet<Pos3D> GetFreeBrickPositions(List<Brick> dropedBricks)
     {
         HashSet<Pos3D> freeBrickPosList = [];
 
@@ -231,13 +244,13 @@ internal class Program
             }
         }
 
-        foreach (var item in sortedBricks)
+        foreach (Brick item in sortedBricks)
         {
             item.UpBricks = item.UpBricks.DistinctBy(x => x.P1).ToList();
             item.DownBricks = item.DownBricks.DistinctBy(x => x.P1).ToList();
         }
 
-        foreach (var item in sortedBricks)
+        foreach (Brick item in sortedBricks)
         {
             if (item.P1.X == 0 && item.P1.Y == 5 && item.P1.Z == 2)
             {
@@ -287,7 +300,7 @@ internal class Program
         // step. order by z
         bricks.Sort((a, b) => a.P1.Z.CompareTo(b.P1.Z));
 
-        foreach (var item in bricks)
+        foreach (Brick item in bricks)
         {
             if (item.P1.Z > item.P2.Z)
             {

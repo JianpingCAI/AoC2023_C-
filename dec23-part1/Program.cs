@@ -46,21 +46,20 @@ internal class Program
         _COLs = mat[0].Length;
 
         // paths and connections
-        Path rootPath = FindPathNetwork(mat);
+        Path rootPath = BuildPathNetwork_BFS(mat);
 
         // traverse paths
         int result = FindLongestPath(rootPath);
 
         sw.Stop();
 
-        // too high: 2035
-        // correct: 2034
         Console.WriteLine($"Result = {result}");
         Console.WriteLine($"Time = {sw.Elapsed.TotalSeconds} seconds");
     }
 
     record Path_CurrentTotalLength(Path path, int curTotalLength);
 
+    // check all the paths to the end, and find the max length
     private static int FindLongestPath(Path rootPath)
     {
         PriorityQueue<Path_CurrentTotalLength, int> pq = new();
@@ -73,17 +72,15 @@ internal class Program
             Path curPath = qItem.path;
             int curTotalLength = qItem.curTotalLength;
 
-            if (curPath.NextPaths.Count == 1)
-            {
-                pq.Enqueue(new Path_CurrentTotalLength(curPath.NextPaths[0], curTotalLength + curPath.NextPaths[0].Length), curTotalLength + curPath.NextPaths[0].Length);
-            }
-            else if (curPath.NextPaths.Count > 1)
+            // not to the end yet
+            if (curPath.NextPaths.Count >= 1)
             {
                 foreach (Path nextPath in curPath.NextPaths)
                 {
                     pq.Enqueue(new Path_CurrentTotalLength(nextPath, curTotalLength + nextPath.Length), curTotalLength + nextPath.Length);
                 }
             }
+            // reach the end, check the total length
             else
             {
                 if (curTotalLength > maxLength)
@@ -97,7 +94,8 @@ internal class Program
         return maxLength - 1;
     }
 
-    private static Path FindPathNetwork(string[] map)
+    // breadth first traverse to build the network of paths
+    private static Path BuildPathNetwork_BFS(string[] map)
     {
         Path startPath = new()
         {

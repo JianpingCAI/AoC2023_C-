@@ -27,10 +27,10 @@
             {
                 hash.Add(curModule.State);
             }
-            else if (curModule.Type == Type.Conjunction)
-            {
-                //hash.Add((curModule as Conjunction).LastRemember);
-            }
+            //else if (curModule.Type == Type.Conjunction)
+            //{
+            //    //hash.Add((curModule as Conjunction).LastRemember);
+            //}
 
             foreach (IModule nextModule in curModule.NextModules.Values)
             {

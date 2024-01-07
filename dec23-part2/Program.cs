@@ -57,8 +57,6 @@ internal class Program
 
         sw.Stop();
 
-        // too high: 6387
-        // 6302
         // C# version: Time = 433.4578745 seconds
         // C++ one:    Time = 4.337 seconds
         Console.WriteLine($"Result = {result}");
@@ -69,6 +67,7 @@ internal class Program
 
     private static HashSet<Pos> _curVisitedStartEndList = [];
 
+    // Depth first traverse, recursive
     private static int GetMaxLength_DFS(Path curPath, string[] map)
     {
         // walk until encounter junction
