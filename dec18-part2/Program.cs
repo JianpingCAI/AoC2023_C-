@@ -11,76 +11,51 @@ internal class Program
 
     private static void Main(string[] args)
     {
-        //Rows = 13434340
-        //Columns = 11775677
         string filePath = "input.txt";
-        //if (filePath == "input2.txt")
-        //{
-        //    _isPrint = true;
-        //}
         string[] lines = File.ReadAllLines(filePath);
 
         Stopwatch sw = Stopwatch.StartNew();
         List<DigInstruction> digs = GetInputs(lines);
 
-        //List<DigInstruction> digs = GetInputs2(lines);
         long result = DigTrench(digs);
 
         sw.Stop();
-        //54732849558210 (too high)
-        //54662804037719
         Console.WriteLine($"Result = {result}");
+
+        // not an optimized solution. takes around 20 seconds to complete
         Console.WriteLine($"Time = {sw.Elapsed.TotalSeconds} seconds");
     }
 
     private static long DigTrench(List<DigInstruction> digs)
     {
-        GetTrechSize(digs);
+        GetTrenchSize(digs);
 
-        // start from (_start_i, _start_j)
-        List<Node> boundaryNodes = GetBoundaryNodes(digs);
+        // find the trench step nodes (which are all the corners), which forms the trench loop
+        List<Node> trenchStepNodes = GetTrenchStepNodes(digs);
 
-        if (_isPrint)
-        {
-            //PrintTrench(mat);
-        }
-
-        //string[] shapeM = FormShapes(mat);
-
-        //if (_isPrint)
-        //{
-        //    Console.WriteLine();
-        //    Print(shapeM);
-        //}
-
-        //CorrectByRayCasting(shapeM, mat);
-
-        long result = RayCasting(boundaryNodes);
-        //long result = CountTrenches(mat);
-        //if (_isPrint)
-        //{
-        //    Console.WriteLine();
-        //    PrintTrench(mat);
-        //}
+        // ray casting with the trench
+        long result = RayCasting(trenchStepNodes);
 
         return result;
     }
 
-    private static long RayCasting(List<Node> boundaryNodes)
+    private static long RayCasting(List<Node> trenchNodes)
     {
         long area = 0;
-        int top_Boundary_Row = int.MaxValue;
-        int bottom_Boundary_Row = int.MinValue;
 
-        foreach (Node node in boundaryNodes)
+        // find the first and last row of the boundary
+        int top_Boundary_i = int.MaxValue;
+        int bottom_Boundary_i = int.MinValue;
+
+        foreach (Node node in trenchNodes)
         {
-            top_Boundary_Row = int.Min(node.I, top_Boundary_Row);
-            bottom_Boundary_Row = int.Max(node.I, bottom_Boundary_Row);
+            top_Boundary_i = int.Min(node.i, top_Boundary_i);
+            bottom_Boundary_i = int.Max(node.i, bottom_Boundary_i);
         }
 
-        for (int row = top_Boundary_Row; row <= bottom_Boundary_Row; row++)
+        for (int row = top_Boundary_i; row <= bottom_Boundary_i; row++)
         {
-            long lineArea = GetValidRowArea(boundaryNodes, row);
+            long lineArea = GetValidRowArea(trenchNodes, row);
 
             //Console.WriteLine($"row={row}: {lineArea}");
             area += lineArea;
@@ -89,98 +64,86 @@ internal class Program
         return area;
     }
 
-    private static readonly List<Node> prevIntersectNodes = [];
-    private static readonly long prevLineArea = 0;
+    private static List<Node> _prevIntersectNodes = [];
+    private static int _prevRowIndex = -1;
+    private static long _prevLineArea = 0;
 
-    private static long GetValidRowArea(List<Node> nodes, int curRow)
+    /// <summary>
+    /// Ray casting on the given curRow
+    /// </summary>
+    /// <param name="trenchNodes"></param>
+    /// <param name="curRow"></param>
+    /// <returns></returns>
+    private static long GetValidRowArea(List<Node> trenchNodes, int curRow)
     {
         long lineArea = 0;
 
+        // get the nodes on the given curRow
         List<Node> intersectNodes = [];
-        HashSet<Node> visited = [];
+        //HashSet<Node> visited = [];
 
-        for (int i = 0; i < nodes.Count; i++)
+        for (int i = 0; i < trenchNodes.Count; i++)
         {
-            // get a line
+            // get a line segment: connect two neighboring two trench corner nodes to form a line
             Node lineStart;
             Node lineEnd;
-            if (i != nodes.Count - 1)
+            if (i != trenchNodes.Count - 1)
             {
-                lineStart = nodes[i];
-                lineEnd = nodes[i + 1];
+                lineStart = trenchNodes[i];
+                lineEnd = trenchNodes[i + 1];
             }
             else
             {
-                lineStart = nodes.Last();
-                lineEnd = nodes.First();
+                lineStart = trenchNodes.Last();
+                lineEnd = trenchNodes.First();
             }
 
-            int minI = int.Min(lineStart.I, lineEnd.I);
-            int maxI = int.Max(lineStart.I, lineEnd.I);
+            int minI = int.Min(lineStart.i, lineEnd.i);
+            int maxI = int.Max(lineStart.i, lineEnd.i);
 
             // intersect with the line
             if (curRow >= minI && curRow <= maxI)
             {
                 // horizontal line
-                if (minI == maxI && curRow == minI)
+                if (minI == maxI)
                 {
-                    if (!visited.Contains(lineStart))
-                    {
-                        intersectNodes.Add(lineStart);
-                        visited.Add(lineStart);
-                    }
-                    if (!visited.Contains(lineEnd))
-                    {
-                        intersectNodes.Add(lineEnd);
-                        visited.Add(lineEnd);
-                    }
+                    intersectNodes.Add(lineStart);
+                    intersectNodes.Add(lineEnd);
                 }
                 //vertical line
-                else if (minI != maxI)
+                else //if (minI != maxI)
                 {
                     if (curRow != minI && curRow != maxI)
                     {
-                        Node newNode = new(curRow, lineStart.J, NodeType.I);
-                        if (!visited.Contains(newNode))
-                        {
-                            intersectNodes.Add(newNode);
-                            visited.Add(newNode);
-                        }
+                        Node newNode = new(curRow, lineStart.j, NodeType.I);
+                        intersectNodes.Add(newNode);
                     }
-                }
-                else
-                {
-                    throw new Exception();
                 }
             }
         }
 
-        if (intersectNodes.Count == 0)
-        {
-            throw new Exception();
-        }
-
         // sort
-        intersectNodes.Sort((x, y) => x.J - y.J);
+        intersectNodes.Sort((x, y) => x.j - y.j);
 
         // why this cache does not work???
-        //if (!IsEqualColumns(intersectNodes, prevIntersectNodes))
-        //{
-        lineArea = GetOverlappedAreaLength(intersectNodes);
+        if (!IsSameIntersectionPattern(intersectNodes, _prevIntersectNodes))
+        {
+            lineArea = GetOverlappedAreaLength(intersectNodes);
+        }
+        else
+        {
+            lineArea = _prevLineArea;
+        }
 
-        //    prevIntersectNodes = intersectNodes;
-        //    prevLineArea = lineArea;
-        //}
-        //// cache the result
-        //else
-        //{
-        //    lineArea = prevLineArea;
-        //}
+        // cache the result
+        _prevLineArea = lineArea;
+        _prevRowIndex = curRow;
+        _prevIntersectNodes = intersectNodes;
 
         return lineArea;
     }
 
-    private static bool IsEqualColumns(List<Node> list1, List<Node> list2)
+    private static bool IsSameIntersectionPattern(List<Node> list1, List<Node> list2)
     {
         if (list1.Count != list2.Count)
         {
@@ -189,7 +152,7 @@ internal class Program
 
         for (int i = 0; i < list1.Count; i++)
         {
-            if (list1[i].J != list2[i].J)
+            if (list1[i].j != list2[i].j || list1[i].Type != list2[i].Type)
             {
                 return false;
             }
@@ -198,28 +161,25 @@ internal class Program
         return true;
     }
 
-    record Range(int Col1, int Col2);
+    record Range(int j1, int j2);
 
+    // same as day 10
     private static long GetOverlappedAreaLength(List<Node> intersectNodes)
     {
         long length = 0;
 
         bool isInside = false;
-        int boundStart_j = intersectNodes[0].J;
+        int boundStart_j = intersectNodes[0].j;
         NodeType prev_Type = intersectNodes[0].Type;
 
-        List<Range> ranges = [];
+        List<Range> segments = [];
 
         for (int n = 0; n < intersectNodes.Count; n++)
         {
-            Node? node = intersectNodes[n];
+            Node node = intersectNodes[n];
             switch (node.Type)
             {
-                case NodeType.X:
-                    {
-                        throw new Exception();
-                    }
-
+                // vertical line
                 case NodeType.I:
                     {
                         isInside = !isInside;
@@ -227,23 +187,18 @@ internal class Program
                         // get inside
                         if (isInside)
                         {
-                            boundStart_j = node.J;
+                            boundStart_j = node.j;
                         }
                         // get outside
                         else
                         {
-                            if (boundStart_j == -1)
-                            {
-                                throw new Exception();
-                            }
-
-                            ranges.Add(new Range(boundStart_j, node.J));
+                            segments.Add(new Range(boundStart_j, node.j));
 
                             boundStart_j = -1;
                         }
                     }
                     break;
-
+                // corner line
                 case NodeType.F:
                 case NodeType.L:
                     {
@@ -252,22 +207,18 @@ internal class Program
                         // get inside
                         if (isInside)
                         {
-                            boundStart_j = node.J;
+                            boundStart_j = node.j;
                         }
                         // get outside
                         else
                         {
-                            if (boundStart_j == -1)
-                            {
-                                throw new Exception();
-                            }
-                            ranges.Add(new Range(boundStart_j, node.J));
+                            segments.Add(new Range(boundStart_j, node.j));
 
-                            boundStart_j = node.J;
+                            boundStart_j = node.j;
                         }
                     }
                     break;
-
+                // corner line
                 case NodeType.J:
                     if (prev_Type != NodeType.F)
                     {
@@ -277,23 +228,14 @@ internal class Program
                     // still  inside
                     if (isInside)
                     {
-                        if (boundStart_j == -1)
-                        {
-                            throw new Exception();
-                        }
+                        segments.Add(new Range(boundStart_j, node.j));
 
-                        ranges.Add(new Range(boundStart_j, node.J));
-
-                        boundStart_j = node.J;
+                        boundStart_j = node.j;
                     }
                     // get outside
                     else
                     {
-                        if (boundStart_j == -1)
-                        {
-                            throw new Exception();
-                        }
-                        ranges.Add(new Range(boundStart_j, node.J));
+                        segments.Add(new Range(boundStart_j, node.j));
 
                         boundStart_j = -1;
                     }
@@ -309,23 +251,14 @@ internal class Program
                     // still  inside
                     if (isInside)
                     {
-                        if (boundStart_j == -1)
-                        {
-                            throw new Exception();
-                        }
+                        segments.Add(new Range(boundStart_j, node.j));
 
-                        ranges.Add(new Range(boundStart_j, node.J));
-
-                        boundStart_j = node.J;
+                        boundStart_j = node.j;
                     }
                     // get outside
                     else
                     {
-                        if (boundStart_j == -1)
-                        {
-                            throw new Exception();
-                        }
-                        ranges.Add(new Range(boundStart_j, node.J));
+                        segments.Add(new Range(boundStart_j, node.j));
 
                         boundStart_j = -1;
                     }
@@ -338,24 +271,24 @@ internal class Program
             prev_Type = node.Type;
         }
 
-        length = GetLengthFromSegments(ranges);
+        length = GetLengthFromSegments(segments);
 
         return length;
     }
 
-    private static long GetLengthFromSegments(List<Range> ranges)
+    private static long GetLengthFromSegments(List<Range> segments)
     {
         long length = 0;
         HashSet<int> values = [];
 
-        foreach (Range range in ranges)
+        foreach (Range range in segments)
         {
-            length += range.Col2 - range.Col1 + 1;
-            values.Add(range.Col1);
-            values.Add(range.Col2);
+            length += range.j2 - range.j1 + 1;
+            values.Add(range.j1);
+            values.Add(range.j2);
         }
 
-        int duplicates = ranges.Count * 2 - values.Count;
+        int duplicates = segments.Count * 2 - values.Count;
 
         return length - duplicates;
     }
@@ -364,7 +297,6 @@ internal class Program
 
     private enum NodeType
     {
-        X, //unknown
         L,
         J,
         F,
@@ -372,27 +304,27 @@ internal class Program
         I //verical
     }
 
-    record Node(int I, int J, NodeType Type);
+    record Node(int i, int j, NodeType Type);
 
-    private static List<Node> GetBoundaryNodes(List<DigInstruction> digs)
+    private static List<Node> GetTrenchStepNodes(List<DigInstruction> digInstructions)
     {
         int i = _start_i;
         int j = _start_j;
 
         List<Node> nodes = [];
 
-        for (int n = 0; n < digs.Count; n++)
+        for (int n = 0; n < digInstructions.Count; n++)
         {
-            DigInstruction inst = digs[n];
+            DigInstruction inst = digInstructions[n];
             char curDir = inst.Dir;
             char nextDir;
-            if (n < digs.Count - 1)
+            if (n < digInstructions.Count - 1)
             {
-                nextDir = digs[n + 1].Dir;
+                nextDir = digInstructions[n + 1].Dir;
             }
             else
             {
-                nextDir = digs[0].Dir;
+                nextDir = digInstructions[0].Dir;
             }
 
             switch (curDir)
@@ -470,14 +402,10 @@ internal class Program
         }
 
         Node startNode = nodes.Last();
-        if (startNode.I != _start_i || startNode.J != _start_j)
-        {
-            throw new Exception();
-        }
-        if (startNode.Type == NodeType.X)
-        {
-            throw new Exception();
-        }
+        //if (startNode.i != _start_i || startNode.j != _start_j)
+        //{
+        //    throw new Exception();
+        //}
 
         nodes.RemoveAt(nodes.Count - 1);
         nodes.Insert(0, startNode);
@@ -485,7 +413,7 @@ internal class Program
         return nodes;
     }
 
-    private static void GetTrechSize(List<DigInstruction> digs)
+    private static void GetTrenchSize(List<DigInstruction> digs)
     {
         int j = 0;
         int i = 0;
@@ -552,17 +480,6 @@ internal class Program
             Console.WriteLine($"_start_i = {_start_i}");
             Console.WriteLine($"_start_j = {_start_j}");
         }
-    }
-
-    private static List<DigInstruction> GetInputs2(string[] lines)
-    {
-        List<DigInstruction> digs = [];
-        for (int i = 0; i < lines.Length; i++)
-        {
-            List<string> input = lines[i].Split(' ').ToList();
-            digs.Add(new DigInstruction(input[0][0], int.Parse(input[1])));
-        }
-        return digs;
     }
 
     private static List<DigInstruction> GetInputs(string[] lines)

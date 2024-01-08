@@ -10,12 +10,10 @@
 
   <ItemGroup>
     <Compile Remove="Class1.cs" />
-    <Compile Remove="Program - Copy.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="Class1.cs" />
-    <None Include="Program - Copy.cs" />
   </ItemGroup>
 
   <ItemGroup>

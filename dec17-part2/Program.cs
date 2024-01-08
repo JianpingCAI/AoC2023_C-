@@ -57,12 +57,12 @@ internal class Program
     private static long Dijkstra(int[,] mat)
     {
         //<(i,j, direction, curLossSum, curDirsCount), curLossSum>
-        PriorityQueue<Tuple<int, int, int, long, int[]>, long> pq = new();
+        PriorityQueue<Tuple<int, int, int, long, int>, long> pq = new();
 
         //E,W,N,S - 0,1,2,3
         // E
-        pq.Enqueue(new Tuple<int, int, int, long, int[]>(0, 0, 0, 0, [1, 0, 0, 0]), 0);
-        pq.Enqueue(new Tuple<int, int, int, long, int[]>(0, 0, 3, 0, [0, 0, 0, 1]), 0);
+        pq.Enqueue(new Tuple<int, int, int, long, int>(0, 0, 0, 0, 1), 0);
+        pq.Enqueue(new Tuple<int, int, int, long, int>(0, 0, 3, 0, 1), 0);
 
         long heatLoss = FindMinimumHeatLoss(mat, pq);
         return heatLoss;
@@ -80,19 +80,18 @@ internal class Program
         //return long.Min(heatLoss1, heatLoss2);
     }
 
-    private static long FindMinimumHeatLoss(int[,] mat, PriorityQueue<Tuple<int, int, int, long, int[]>, long> pq)
+    private static long FindMinimumHeatLoss(int[,] mat, PriorityQueue<Tuple<int, int, int, long, int>, long> pq)
     {
         while (pq.Count > 0)
         {
-            Tuple<int, int, int, long, int[]> cur = pq.Dequeue();
+            Tuple<int, int, int, long, int> cur = pq.Dequeue();
             int cur_i = cur.Item1;
             int cur_j = cur.Item2;
             int curDir = cur.Item3;
             long curLossSum = cur.Item4;
-            int[] curDirsCounts = cur.Item5;
+            int curDirsCounts = cur.Item5;
 
-            int curDirCount = curDirsCounts[curDir];
-            Node node = new(cur_i, cur_j, curDir, curDirsCounts[curDir]);
+            Node node = new(cur_i, cur_j, curDir, curDirsCounts);
 
             // (i, j, dir) is visited
             if (_visited.Contains(node))
@@ -108,7 +107,7 @@ internal class Program
                 return curLossSum;
             }
 
-            List<Tuple<int, int, int>> validNexts = GetValidNextNeighbors2(cur_i, cur_j, curDir, curDirsCounts[curDir]);
+            List<Tuple<int, int, int>> validNexts = GetValidNextNeighbors2(cur_i, cur_j, curDir, curDirsCounts);
 
             foreach (Tuple<int, int, int> validNext in validNexts)
             {
@@ -118,22 +117,22 @@ internal class Program
 
                 long nextLossSum = curLossSum + mat[next_i, next_j];
 
-                int[] next_DirsCount = new int[4];
+                int next_DirsCount;
                 if (curDir == next_dir)
                 {
-                    next_DirsCount[next_dir] = curDirsCounts[curDir] + 1;
+                    next_DirsCount = curDirsCounts + 1;
                 }
                 else
                 {
-                    next_DirsCount[next_dir] = 1;
+                    next_DirsCount = 1;
                 }
 
-                if (next_DirsCount[next_dir] > 10)
-                {
-                    Console.WriteLine("wrong1");
-                }
+                //if (next_DirsCount > 10)
+                //{
+                //    Console.WriteLine("wrong1");
+                //}
 
-                pq.Enqueue(new Tuple<int, int, int, long, int[]>
+                pq.Enqueue(new Tuple<int, int, int, long, int>
                     (next_i, next_j, next_dir, nextLossSum, next_DirsCount), nextLossSum);
             }
         }
