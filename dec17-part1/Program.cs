@@ -32,7 +32,7 @@ internal class Program
 
         mat = FormMatrix(lines);
 
-        long result = Dijkstra(mat);
+        int result = Dijkstra(mat);
 
         sw.Stop();
 
@@ -64,43 +64,41 @@ internal class Program
     /// </summary>
     /// <param name="mat"></param>
     /// <returns></returns>
-    private static long Dijkstra(int[,] mat)
+    private static int Dijkstra(int[,] mat)
     {
         //<(i,j, direction, curLossSum, dirCount), curLossSum>
-        PriorityQueue<Tuple<int, int, int, long, int>, long> pq = new();
+        PriorityQueue<Tuple<Node, int>, int> pq = new();
 
         //// E - east
-        //pq.Enqueue(new Tuple<int, int, int, long, int>(0, 0, 0, 0, 1), 0);
+        //pq.Enqueue(new Tuple<int, int, int, int, int>(0, 0, 0, 0, 1), 0);
         //// S - south
-        //pq.Enqueue(new Tuple<int, int, int, long, int>(0, 0, 3, 0, 1), 0);
+        //pq.Enqueue(new Tuple<int, int, int, int, int>(0, 0, 3, 0, 1), 0);
 
-        //long heatLoss = FindMinimumHeatLss(mat, pq);
+        //int heatLoss = FindMinimumHeatLss(mat, pq);
         //return heatLoss;
 
-        pq.Enqueue(new Tuple<int, int, int, long, int>(0, 0, 0, 0, 1), 0);
-        long heatLoss1 = FindMinimumHeatLoss(mat, pq);
+        pq.Enqueue(new Tuple<Node, int>(new Node(0, 0, 0, 1), 0), 0);
+        int heatLoss1 = FindMinimumHeatLoss(mat, pq);
 
         pq.Clear();
         _visited.Clear();
 
-        pq.Enqueue(new Tuple<int, int, int, long, int>(0, 0, 3, 0, 1), 0);
-        long heatLoss2 = FindMinimumHeatLoss(mat, pq);
+        pq.Enqueue(new Tuple<Node, int>(new Node(0, 0, 3, 1), 0), 0);
+        int heatLoss2 = FindMinimumHeatLoss(mat, pq);
 
-        return long.Min(heatLoss1, heatLoss2);
+        return int.Min(heatLoss1, heatLoss2);
     }
 
-    private static long FindMinimumHeatLoss(int[,] mat, PriorityQueue<Tuple<int, int, int, long, int>, long> pq)
+    private static int FindMinimumHeatLoss(int[,] mat, PriorityQueue<Tuple<Node, int>, int> pq)
     {
         while (pq.Count > 0)
         {
-            Tuple<int, int, int, long, int> cur = pq.Dequeue();
-            int cur_i = cur.Item1;
-            int cur_j = cur.Item2;
-            int curDir = cur.Item3;
-            long curLossSum = cur.Item4;
-            int curDirCount = cur.Item5;
+            var cur = pq.Dequeue();
+            int cur_i = cur.Item1.I;
+            int cur_j = cur.Item1.J;
+            int curLossSum = cur.Item2;
 
-            Node node = new(cur_i, cur_j, curDir, curDirCount);
+            Node node = new(cur_i, cur_j, cur.Item1.Dir, cur.Item1.DirCount);
 
             // (i, j, dir) is visited
             if (_visited.Contains(node))
@@ -118,34 +116,23 @@ internal class Program
             }
 
             List<Tuple<int, int, int>> validNexts = (_isPart1Quesion)
-                ? GetValidNextNeighbors(cur_i, cur_j, curDir, curDirCount)
-                : GetValidNextNeighbors2(cur_i, cur_j, curDir, curDirCount);
+                ? GetValidNextNeighbors(cur_i, cur_j, cur.Item1.Dir, cur.Item1.DirCount)
+                : GetValidNextNeighbors2(cur_i, cur_j, cur.Item1.Dir, cur.Item1.DirCount);
 
             foreach (Tuple<int, int, int> validNext in validNexts)
             {
                 int next_i = validNext.Item1;
                 int next_j = validNext.Item2;
                 int next_dir = validNext.Item3;
-
-                long nextLossSum = curLossSum + mat[next_i, next_j];
-
-                int next_DirCount;
-                if (curDir == next_dir)
-                {
-                    next_DirCount = curDirCount + 1;
-                }
-                else
-                {
-                    next_DirCount = 1;
-                }
+                int next_DirCount = (cur.Item1.Dir == next_dir) ? cur.Item1.DirCount + 1 : 1;
 
                 //if (next_DirCount > 3)
                 //{
                 //    Console.WriteLine("wrong1");
                 //}
-
-                pq.Enqueue(new Tuple<int, int, int, long, int>
-                    (next_i, next_j, next_dir, nextLossSum, next_DirCount), nextLossSum);
+                int nextLossSum = curLossSum + mat[next_i, next_j];
+                pq.Enqueue(new Tuple<Node, int>
+                    (new Node(next_i, next_j, next_dir, next_DirCount), nextLossSum), nextLossSum);
             }
         }
 

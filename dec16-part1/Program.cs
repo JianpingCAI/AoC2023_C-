@@ -1,5 +1,8 @@
 ﻿using System.Diagnostics;
 
+record Tile(int i, int j, int dir);
+record Pos(int i, int j);
+
 internal class Program
 {
     private static int ROWs = 0;
@@ -31,39 +34,48 @@ internal class Program
         Console.WriteLine($"Time = {sw.Elapsed.TotalSeconds} seconds");
     }
 
+    /// <summary>
+    /// breadth first
+    /// - queue
+    ///
+    /// directions: E:0,W:1, N:2, S:3
+    ///
+    /// </summary>
+    /// <param name="rows"></param>
+    /// <returns></returns>
     private static int StartBeam(List<string> rows)
     {
         //E >:0,W <:1, N ^:2, S :3
         bool[,,] visited = new bool[rows.Count, rows[0].Length, 4];
 
         //(i,j, beam-direction)
-        Queue<Tuple<int, int, int>> que = new();
+        Queue<Tile> que = new();
 
-        que.Enqueue(new Tuple<int, int, int>(0, 0, 0));
+        que.Enqueue(new Tile(0, 0, 0));
 
         while (que.Count() > 0)
         {
-            Tuple<int, int, int> tile = que.Dequeue();
+            Tile tile = que.Dequeue();
 
-            int cur_dir = tile.Item3;
+            int cur_dir = tile.dir;
 
-            if (visited[tile.Item1, tile.Item2, cur_dir])
+            if (visited[tile.i, tile.j, cur_dir])
             {
                 continue;
             }
-            visited[tile.Item1, tile.Item2, cur_dir] = true;
+            visited[tile.i, tile.j, cur_dir] = true;
 
             // next direction
-            char cur_char = rows[tile.Item1][tile.Item2];
+            char cur_char = rows[tile.i][tile.j];
             switch (cur_char)
             {
                 case '.':
                     {
                         int next_dir = cur_dir;
-                        Tuple<int, int>? next_loc = GetNextTileLocation(tile, next_dir);
+                        Pos? next_loc = GetNextTileLocation(tile, next_dir);
                         if (null != next_loc)
                         {
-                            que.Enqueue(new Tuple<int, int, int>(next_loc.Item1, next_loc.Item2, next_dir));
+                            que.Enqueue(new Tile(next_loc.i, next_loc.j, next_dir));
                         }
                     }
                     break;
@@ -76,10 +88,10 @@ internal class Program
                             case 1:
                                 {
                                     int next_dir = cur_dir;
-                                    Tuple<int, int>? next_loc = GetNextTileLocation(tile, next_dir);
+                                    Pos? next_loc = GetNextTileLocation(tile, next_dir);
                                     if (null != next_loc)
                                     {
-                                        que.Enqueue(new Tuple<int, int, int>(next_loc.Item1, next_loc.Item2, next_dir));
+                                        que.Enqueue(new Tile(next_loc.i, next_loc.j, next_dir));
                                     }
                                 }
                                 break;
@@ -88,17 +100,17 @@ internal class Program
                             case 3:
                                 {
                                     int next_dir = 0;
-                                    Tuple<int, int>? next_loc = GetNextTileLocation(tile, next_dir);
+                                    Pos? next_loc = GetNextTileLocation(tile, next_dir);
                                     if (null != next_loc)
                                     {
-                                        que.Enqueue(new Tuple<int, int, int>(next_loc.Item1, next_loc.Item2, next_dir));
+                                        que.Enqueue(new Tile(next_loc.i, next_loc.j, next_dir));
                                     }
 
                                     next_dir = 1;
                                     next_loc = GetNextTileLocation(tile, next_dir);
                                     if (null != next_loc)
                                     {
-                                        que.Enqueue(new Tuple<int, int, int>(next_loc.Item1, next_loc.Item2, next_dir));
+                                        que.Enqueue(new Tile(next_loc.i, next_loc.j, next_dir));
                                     }
                                 }
                                 break;
@@ -117,17 +129,17 @@ internal class Program
                             case 1:
                                 {
                                     int next_dir = 2;
-                                    Tuple<int, int>? next_loc = GetNextTileLocation(tile, next_dir);
+                                    Pos? next_loc = GetNextTileLocation(tile, next_dir);
                                     if (null != next_loc)
                                     {
-                                        que.Enqueue(new Tuple<int, int, int>(next_loc.Item1, next_loc.Item2, next_dir));
+                                        que.Enqueue(new Tile(next_loc.i, next_loc.j, next_dir));
                                     }
 
                                     next_dir = 3;
                                     next_loc = GetNextTileLocation(tile, next_dir);
                                     if (null != next_loc)
                                     {
-                                        que.Enqueue(new Tuple<int, int, int>(next_loc.Item1, next_loc.Item2, next_dir));
+                                        que.Enqueue(new Tile(next_loc.i, next_loc.j, next_dir));
                                     }
                                 }
                                 break;
@@ -136,10 +148,10 @@ internal class Program
                             case 3:
                                 {
                                     int next_dir = cur_dir;
-                                    Tuple<int, int>? next_loc = GetNextTileLocation(tile, next_dir);
+                                    Pos? next_loc = GetNextTileLocation(tile, next_dir);
                                     if (null != next_loc)
                                     {
-                                        que.Enqueue(new Tuple<int, int, int>(next_loc.Item1, next_loc.Item2, next_dir));
+                                        que.Enqueue(new Tile(next_loc.i, next_loc.j, next_dir));
                                     }
                                 }
                                 break;
@@ -184,10 +196,10 @@ internal class Program
                                 break;
                         }
 
-                        Tuple<int, int>? next_loc = GetNextTileLocation(tile, next_dir);
+                        Pos? next_loc = GetNextTileLocation(tile, next_dir);
                         if (null != next_loc)
                         {
-                            que.Enqueue(new Tuple<int, int, int>(next_loc.Item1, next_loc.Item2, next_dir));
+                            que.Enqueue(new Tile(next_loc.i, next_loc.j, next_dir));
                         }
                     }
 
@@ -226,10 +238,10 @@ internal class Program
                                 break;
                         }
 
-                        Tuple<int, int>? next_loc = GetNextTileLocation(tile, next_dir);
+                        Pos? next_loc = GetNextTileLocation(tile, next_dir);
                         if (null != next_loc)
                         {
-                            que.Enqueue(new Tuple<int, int, int>(next_loc.Item1, next_loc.Item2, next_dir));
+                            que.Enqueue(new Tile(next_loc.i, next_loc.j, next_dir));
                         }
                     }
                     break;
@@ -259,29 +271,29 @@ internal class Program
         return count;
     }
 
-    private static Tuple<int, int>? GetNextTileLocation(Tuple<int, int, int> tile, int next_dir)
+    private static Pos? GetNextTileLocation(Tile tile, int next_dir)
     {
         int i = 0, j = 0;
         switch (next_dir)
         {
             case 0:
-                i = tile.Item1;
-                j = tile.Item2 + 1;
+                i = tile.i;
+                j = tile.j + 1;
                 break;
 
             case 1:
-                i = tile.Item1;
-                j = tile.Item2 - 1;
+                i = tile.i;
+                j = tile.j - 1;
                 break;
 
             case 2:
-                i = tile.Item1 - 1;
-                j = tile.Item2;
+                i = tile.i - 1;
+                j = tile.j;
                 break;
 
             case 3:
-                i = tile.Item1 + 1;
-                j = tile.Item2;
+                i = tile.i + 1;
+                j = tile.j;
                 break;
 
             default:
@@ -293,6 +305,6 @@ internal class Program
             return null;
         }
 
-        return new Tuple<int, int>(i, j);
+        return new Pos(i, j);
     }
 }

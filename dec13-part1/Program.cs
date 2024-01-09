@@ -48,10 +48,7 @@ public class DualMatrix<T>
 
     public void SetRow(int row, T[] newRowValues)
     {
-        if (newRowValues == null)
-        {
-            throw new ArgumentNullException(nameof(newRowValues));
-        }
+        ArgumentNullException.ThrowIfNull(newRowValues);
 
         if (newRowValues.Length != Columns)
         {

@@ -1,10 +1,10 @@
-﻿using System.Data;
+﻿using AocLib.DataTypes;
+using System.Data;
 using System.Diagnostics;
 
 internal class Program2
 {
-    private static readonly int[] _hashCodes = new int[4];
-    private static readonly HashSet<int> matSet = [];
+    private static readonly HashSet<int> _cyclePatterns = [];
     private static int cycles = 0;
     private static readonly List<int> repeatedCycles = [];
 
@@ -16,52 +16,50 @@ internal class Program2
 
         long result = 0;
 
-        List<DualMatrix<char>> mats = GetInputDataMatrices(lines);
+        DualMatrix<char> mat = GetInputDataMatrices(lines);
+        int[] hashCodes = new int[4];
 
-        foreach (DualMatrix<char> mat in mats)
+        //mat.Print();
+        //Console.Clear();
+        //Thread.Sleep(1000);
+
+        const int COUNT_Cycles = 1000000000;
+        for (int i = 0; i < COUNT_Cycles; i++)
         {
-            //mat.Print();
-            //Console.Clear();
-            //Thread.Sleep(1000);
+            ++cycles;
 
-            int COUNT = 1000000000;
-            for (int i = 0; i < COUNT; i++)
+            RollVertical(mat);
+            hashCodes[0] = (mat.GetHashCode());
+
+            RollHorizon(mat);
+            hashCodes[1] = (mat.GetHashCode());
+
+            RollVertical(mat, false);
+            hashCodes[2] = (mat.GetHashCode());
+
+            RollHorizon(mat, false);
+            hashCodes[3] = (mat.GetHashCode());
+
+            if (HasRepeatPattern(hashCodes))
             {
-                ++cycles;
-
-                RollVertical(mat);
-                _hashCodes[0] = (mat.GetMatrixHashCode());
-
-                RollHorizon(mat);
-                _hashCodes[1] = (mat.GetMatrixHashCode());
-
-                RollVertical(mat, false);
-                _hashCodes[2] = (mat.GetMatrixHashCode());
-
-                RollHorizon(mat, false);
-                _hashCodes[3] = (mat.GetMatrixHashCode());
-
-                if (FindRepeatPattern(_hashCodes))
-                {
-                    break;
-                }
+                break;
             }
-
-            int bigCycle = _repeatIndex2 - _repeatIndex1;
-            int remainCycles = (COUNT - (_repeatIndex1 - 1)) % bigCycle;
-            remainCycles--;
-
-            for (int i = 1; i <= remainCycles; i++)
-            {
-                RunOneCycle(mat);
-            }
-
-            //Console.WriteLine()
-
-            long load = GetLoad(mat);
-
-            result += load;
         }
+
+        int bigCycle = _repeatIndex2 - _repeatIndex1;
+        int remainCycles = (COUNT_Cycles - (_repeatIndex1 - 1)) % bigCycle;
+        remainCycles--;
+
+        for (int i = 1; i <= remainCycles; i++)
+        {
+            RunOneCycle(mat);
+        }
+
+        //Console.WriteLine()
+
+        long load = GetLoad(mat);
+
+        result += load;
 
         sw.Stop();
         Console.WriteLine($"Result = {result}");
@@ -83,7 +81,7 @@ internal class Program2
     private static int _repeatIndex2 = -1;
     private static int? _repeatedCode = null;
 
-    private static bool FindRepeatPattern(int[] hashCodes)
+    private static bool HasRepeatPattern(int[] hashCodes)
     {
         HashCode hash = new();
 
@@ -92,29 +90,31 @@ internal class Program2
             hash.Add(hc);
         }
 
-        int h = hash.ToHashCode();
+        int cyclePatternCode = hash.ToHashCode();
 
-        if (h == _repeatedCode)
+        // second time detect the repeat
+        if (cyclePatternCode == _repeatedCode)
         {
             _repeatIndex2 = cycles;
 
             return true;
         }
 
-        if (matSet.Contains(h))
+        // first time detect the repeat
+        if (_cyclePatterns.Contains(cyclePatternCode))
         {
             if (!_repeatedCode.HasValue)
             {
                 _repeatIndex1 = cycles;
 
-                _repeatedCode = h;
+                _repeatedCode = cyclePatternCode;
             }
 
             //Console.WriteLine("repeated");
         }
         else
         {
-            matSet.Add(h);
+            _cyclePatterns.Add(cyclePatternCode);
         }
         return false;
     }
@@ -258,147 +258,22 @@ internal class Program2
         return load;
     }
 
-    private static List<DualMatrix<char>> GetInputDataMatrices(string[] lines)
+    private static DualMatrix<char> GetInputDataMatrices(string[] lines)
     {
-        List<DualMatrix<char>> dataMats = [];
-
         List<char[]> rows = [];
-        for (int i = 0; i <= lines.Length; i++)
+        for (int i = 0; i < lines.Length; i++)
         {
-            string line = i == lines.Length ? string.Empty : lines[i];
-            if (!string.IsNullOrEmpty(line))
-            {
-                char[] row = line.ToArray().Select(x => (x == '#') ? '2' : (x == '.' ? '1' : '0')).ToArray();
-                rows.Add(row);
-            }
-            else
-            {
-                DualMatrix<char> mat = new(rows.Count, rows[0].Length);
-                for (int r = 0; r < rows.Count; r++)
-                {
-                    char[] row = rows[r];
-                    mat.SetRow(r, row);
-                }
-
-                dataMats.Add(mat);
-
-                rows.Clear();
-            }
+            char[] row = lines[i].ToArray().Select(x => (x == '#') ? '2' : (x == '.' ? '1' : '0')).ToArray();
+            rows.Add(row);
         }
 
-        return dataMats;
-    }
-}
-
-public class DualMatrix<T>
-{
-    private readonly T[][] _matrix;
-    private readonly T[][] _transposedMatrix;
-    private readonly int _rows;
-    private readonly int _columns;
-
-    public int Rows => _rows;
-
-    public int Columns => _columns;
-
-    public DualMatrix(int rows, int columns)
-    {
-        this._rows = rows;
-        this._columns = columns;
-
-        _matrix = new T[rows][];
-        _transposedMatrix = new T[columns][];
-
-        for (int i = 0; i < rows; i++)
+        DualMatrix<char> mat = new(rows.Count, rows[0].Length);
+        for (int r = 0; r < rows.Count; r++)
         {
-            _matrix[i] = new T[columns];
+            char[] row = rows[r];
+            mat.SetRow(r, row);
         }
 
-        for (int j = 0; j < columns; j++)
-        {
-            _transposedMatrix[j] = new T[rows];
-        }
-    }
-
-    public void Set(int row, int column, T value)
-    {
-        _matrix[row][column] = value;
-        _transposedMatrix[column][row] = value;
-    }
-
-    public T[] Row(int row)
-    {
-        return _matrix[row];
-    }
-
-    public T[] Column(int column)
-    {
-        return _transposedMatrix[column];
-    }
-
-    public void SetRow(int row, T[] newRowValues)
-    {
-        if (newRowValues == null)
-        {
-            throw new ArgumentNullException(nameof(newRowValues));
-        }
-
-        if (newRowValues.Length != Columns)
-        {
-            throw new ArgumentException("Length of newRowValues must be equal to the number of columns");
-        }
-
-        for (int col = 0; col < Columns; col++)
-        {
-            _matrix[row][col] = newRowValues[col];
-            _transposedMatrix[col][row] = newRowValues[col];
-        }
-    }
-
-    public void SetColumn(int col, T[] newColValues)
-    {
-        if (newColValues == null)
-        {
-            throw new ArgumentNullException(nameof(newColValues));
-        }
-
-        if (newColValues.Length != Rows)
-        {
-            throw new ArgumentException("Length of newRowValues must be equal to the number of columns");
-        }
-
-        for (int row = 0; row < Columns; row++)
-        {
-            _matrix[row][col] = newColValues[row];
-            _transposedMatrix[col][row] = newColValues[row];
-        }
-    }
-
-    internal void Print()
-    {
-        foreach (T[] row in _matrix)
-        {
-            foreach (T t in row)
-            {
-                Console.Write(t);
-            }
-            Console.WriteLine();
-        }
-        Console.WriteLine();
-    }
-
-    public int GetMatrixHashCode()
-    {
-        HashCode hash = new();
-
-        foreach (T[] row in _matrix)
-        {
-            foreach (T? c in row)
-            {
-                hash.Add(c);
-            }
-        }
-
-        return hash.ToHashCode();
+        return mat;
     }
 }

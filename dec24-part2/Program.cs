@@ -211,7 +211,7 @@ internal class Program
 
     private static SortedSet<int> GetIntegers(long s1, long s2, int v1)
     {
-        SortedSet<int> ints = new SortedSet<int>();
+        SortedSet<int> ints = new();
 
         for (int v = -1000; v < 1000; v++)
         {
