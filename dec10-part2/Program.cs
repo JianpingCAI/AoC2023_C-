@@ -1,377 +1,332 @@
-﻿string filePath = "input.txt"; //4,8,10,1 ???input2
-string[] lines = File.ReadAllLines(filePath);
-
-int result = 0;
-
-string[] mat = new string[lines.Length];
-
-for (int i = 0; i < lines.Length; i++)
+﻿internal class Program
 {
-    string line = lines[i];
-    mat[i] = line;
-}
+    record Pos2D(int i, int j);
 
-int R = mat.Length;
-int C = mat[0].Length;
-
-bool[,] visited = new bool[R, C];
-
-// S
-Tuple<int, int> S = new(0, 0);
-for (int i = 0; i < mat.Length; i++)
-{
-    for (int j = 0; j < mat[0].Length; j++)
+    private static void Main(string[] args)
     {
-        if (mat[i][j] == 'S')
+        string filePath = "input.txt";
+        string[] lines = File.ReadAllLines(filePath);
+
+        string[] mat = new string[lines.Length];
+
+        for (int i = 0; i < lines.Length; i++)
         {
-            S = new Tuple<int, int>(i, j);
-            visited[i, j] = true;
-            break;
+            string line = lines[i];
+            mat[i] = line;
         }
-    }
-}
+        int ROWS = mat.Length;
+        int COLS = mat[0].Length;
 
-// queue
-Queue<Tuple<int, int, List<Tuple<int, int>>>> que = new();
-//Up
-if (S.Item1 - 1 >= 0
-    && mat[S.Item1 - 1][S.Item2] != '.'
-    && mat[S.Item1 - 1][S.Item2] != '-'
-    && mat[S.Item1 - 1][S.Item2] != 'L'
-    && mat[S.Item1 - 1][S.Item2] != 'J')
-{
-    que.Enqueue(new Tuple<int, int, List<Tuple<int, int>>>(S.Item1 - 1, S.Item2,
-        [new(S.Item1, S.Item2)]));
-}
+        int[,] boundMat = GetLoopBoundary(mat);
 
-//Down
-if (S.Item1 + 1 < R
-    && mat[S.Item1 + 1][S.Item2] != '.'
-    && mat[S.Item1 + 1][S.Item2] != '-'
-    && mat[S.Item1 + 1][S.Item2] != 'F'
-    && mat[S.Item1 + 1][S.Item2] != '7')
-{
-    que.Enqueue(new Tuple<int, int, List<Tuple<int, int>>>(S.Item1 + 1, S.Item2,
-        [new(S.Item1, S.Item2)]));
-}
+        FillByRayCasting(mat, boundMat);
 
-//Left
-if (S.Item2 - 1 >= 0
-    && mat[S.Item1][S.Item2 - 1] != '.'
-    && mat[S.Item1][S.Item2 - 1] != '|'
-    && mat[S.Item1][S.Item2 - 1] != 'J'
-    && mat[S.Item1][S.Item2 - 1] != '7')
-{
-    que.Enqueue(new Tuple<int, int, List<Tuple<int, int>>>(S.Item1, S.Item2 - 1,
-        [new(S.Item1, S.Item2)]));
-}
+        int count = 0;
+        for (int i = 0; i < ROWS; i++)
+        {
+            for (int j = 0; j < COLS; j++)
+            {
+                if (boundMat[i, j] == 0) // Inside the loop
+                {
+                    ++count;
+                }
+            }
+        }
 
-//Right
-if (S.Item2 + 1 < C
-    && mat[S.Item1][S.Item2 + 1] != '.'
-    && mat[S.Item1][S.Item2 + 1] != '|'
-    && mat[S.Item1][S.Item2 + 1] != 'L'
-    && mat[S.Item1][S.Item2 + 1] != 'F')
-{
-    que.Enqueue(new Tuple<int, int, List<Tuple<int, int>>>(S.Item1, S.Item2 + 1,
-        [new(S.Item1, S.Item2)]));
-}
-
-// paths
-int countLayers = 0;
-
-List<List<Tuple<int, int>>> loopPaths = [];
-// traverse
-while (que.Count > 0)
-{
-    ++countLayers;
-    int layerCount = que.Count;
-
-    Tuple<int, int>? loopNode = containsDuplicatedElements(que);
-    if (null != loopNode)
-    {
-        result = countLayers;
+        Console.WriteLine($"Result = {count}");
     }
 
-    // each layer
-    for (int L = 0; L < layerCount; L++)
+    private static int[,] GetLoopBoundary(string[] mat)
     {
-        Tuple<int, int, List<Tuple<int, int>>> q = que.Dequeue();
-        int i = q.Item1;
-        int j = q.Item2;
+        int ROWS = mat.Length;
+        int COLS = mat[0].Length;
+        bool[,] visited = new bool[ROWS, COLS];
 
-        List<Tuple<int, int>> path = q.Item3.ToList();
-        path.Add(new Tuple<int, int>(i, j));
-
-        if (null != loopNode && i == loopNode.Item1 && j == loopNode.Item2)
+        // S
+        Pos2D startS = new(0, 0);
+        for (int i = 0; i < mat.Length; i++)
         {
-            loopPaths.Add(path);
-        }
-
-        if (i < 0 || visited[i, j])
-        {
-            continue;
-        }
-
-        visited[i, j] = true;
-
-        if (mat[i][j] == 'F')
-        {
-            // j+1
-            if (j + 1 < C && !visited[i, j + 1] && mat[i][j + 1] != '.')
+            for (int j = 0; j < mat[0].Length; j++)
             {
-                que.Enqueue(new Tuple<int, int, List<Tuple<int, int>>>(i, j + 1, path));
-            }
-            //i+1
-            if (i + 1 < R && !visited[i + 1, j] && mat[i + 1][j] != '.')
-            {
-                que.Enqueue(new Tuple<int, int, List<Tuple<int, int>>>(i + 1, j, path));
-            }
-        }
-        else
-        if (mat[i][j] == 'J')
-        {
-            // j-1
-            if (j - 1 >= 0 && !visited[i, j - 1] && mat[i][j - 1] != '.')
-            {
-                que.Enqueue(new Tuple<int, int, List<Tuple<int, int>>>(i, j - 1, path));
-            }
-            //i-1
-            if (i - 1 >= 0 && !visited[i - 1, j] && mat[i - 1][j] != '.')
-            {
-                que.Enqueue(new Tuple<int, int, List<Tuple<int, int>>>(i - 1, j, path));
-            }
-        }
-        else
-            if (mat[i][j] == '7')
-        {
-            // j-1
-            if (j - 1 >= 0 && !visited[i, j - 1] && mat[i][j - 1] != '.')
-            {
-                que.Enqueue(new Tuple<int, int, List<Tuple<int, int>>>(i, j - 1, path));
-            }
-            //i+1
-            if (i + 1 < R && !visited[i + 1, j] && mat[i + 1][j] != '.')
-            {
-                que.Enqueue(new Tuple<int, int, List<Tuple<int, int>>>(i + 1, j, path));
-            }
-        }
-        else
-            if (mat[i][j] == 'L')
-        {
-            // j+1
-            if (j + 1 < C && !visited[i, j + 1] && mat[i][j + 1] != '.')
-            {
-                que.Enqueue(new Tuple<int, int, List<Tuple<int, int>>>(i, j + 1, path));
-            }
-            //i-1
-            if (i - 1 >= 0 && !visited[i - 1, j] && mat[i - 1][j] != '.')
-            {
-                que.Enqueue(new Tuple<int, int, List<Tuple<int, int>>>(i - 1, j, path));
-            }
-        }
-        else
-            if (mat[i][j] == '|')
-        {
-            //i-1
-            if (i - 1 >= 0 && !visited[i - 1, j] && mat[i - 1][j] != '.')
-            {
-                que.Enqueue(new Tuple<int, int, List<Tuple<int, int>>>(i - 1, j, path));
-            }
-            //i+1
-            if (i + 1 < R && !visited[i + 1, j] && mat[i + 1][j] != '.')
-            {
-                que.Enqueue(new Tuple<int, int, List<Tuple<int, int>>>(i + 1, j, path));
-            }
-        }
-        else
-            if (mat[i][j] == '-')
-        {
-            // j-1
-            if (j - 1 >= 0 && !visited[i, j - 1] && mat[i][j - 1] != '.')
-            {
-                que.Enqueue(new Tuple<int, int, List<Tuple<int, int>>>(i, j - 1, path));
-            }
-            // j+1
-            if (j + 1 < C && !visited[i, j + 1] && mat[i][j + 1] != '.')
-            {
-                que.Enqueue(new Tuple<int, int, List<Tuple<int, int>>>(i, j + 1, path));
-            }
-        }
-    }
-}
-
-// two longest paths
-List<Tuple<int, int>> loop1 = loopPaths.Last();
-List<Tuple<int, int>> loop2 = loopPaths[loopPaths.Count - 2];
-
-//find boundary elements
-int[,] bound = new int[R, C];
-foreach (Tuple<int, int> b in loop1)
-{
-    bound[b.Item1, b.Item2] = 1;
-}
-foreach (Tuple<int, int> b in loop2)
-{
-    bound[b.Item1, b.Item2] = 1;
-}
-
-Tuple<int, int>? containsDuplicatedElements(Queue<Tuple<int, int, List<Tuple<int, int>>>> que)
-{
-    HashSet<Tuple<int, int>> tuples = [];
-    foreach (Tuple<int, int, List<Tuple<int, int>>> item in que)
-    {
-        if (tuples.Contains(new Tuple<int, int>(item.Item1, item.Item2)))
-        {
-            return new Tuple<int, int>(item.Item1, item.Item2);
-        }
-
-        tuples.Add(new Tuple<int, int>(item.Item1, item.Item2));
-    }
-
-    return null;
-}
-
-CorrectByRayCasting(mat, bound);
-
-Console.WriteLine("\n");
-//PrintMatrix(bound);
-
-int count = 0;
-for (int i = 0; i < R; i++)
-{
-    for (int j = 0; j < C; j++)
-    {
-        if (bound[i, j] == 0) // Inside the loop
-        {
-            ++count;
-        }
-    }
-}
-
-// 395
-//7012,
-Console.WriteLine($"Result = {count}");
-Console.WriteLine($"Layers = {countLayers}");
-
-void PrintMatrix(int[,] m)
-{
-    int R = m.GetLength(0);
-    int C = m.GetLength(1);
-
-    for (int i = 0; i < R; i++)
-    {
-        for (int j = 0; j < C; j++)
-        {
-            Console.Write($"{m[i, j]}");
-        }
-        Console.Write("\n");
-    }
-}
-
-/**
- mat:   2d matrix, original input 
- bound: 2d matrix: 0 - non-boundary; 1 - boundary
-
- result: check all non-boundary elements, and set them to 2 if outside the boundary loop.
- */
-void CorrectByRayCasting(string[] mat, int[,] bound)
-{
-    int numRows = bound.GetLength(0);
-    for (int i = 0; i < numRows; i++)
-    {
-        RayCasting(mat, bound, i);
-    }
-}
-
-void RayCasting(string[] M, int[,] B, int r)
-{
-    bool isInside = false;
-    char prevB = ' ';
-    char curB;
-
-    int numColums = B.GetLength(1);
-    for (int j = 0; j < numColums; j++)
-    {
-        // is bounday
-        if (B[r, j] == 1)
-        {
-            curB = M[r][j];
-            switch (curB)
-            {
-                case '|':
-                case 'F':
-                case 'L':
-                case 'S':
-                    isInside = !isInside;
+                if (mat[i][j] == 'S')
+                {
+                    startS = new Pos2D(i, j);
+                    visited[i, j] = true;
                     break;
+                }
+            }
+        }
 
-                case 'J':
-                    if (prevB != 'F')
+        // queue
+        Queue<Tuple<Pos2D, List<Pos2D>>> que = new();
+        //Up
+        if (startS.i - 1 >= 0
+            && mat[startS.i - 1][startS.j] != '.'
+            && mat[startS.i - 1][startS.j] != '-'
+            && mat[startS.i - 1][startS.j] != 'L'
+            && mat[startS.i - 1][startS.j] != 'J')
+        {
+            que.Enqueue(new Tuple<Pos2D, List<Pos2D>>(new Pos2D(startS.i - 1, startS.j), [new(startS.i, startS.j)]));
+        }
+
+        //Down
+        if (startS.i + 1 < ROWS
+            && mat[startS.i + 1][startS.j] != '.'
+            && mat[startS.i + 1][startS.j] != '-'
+            && mat[startS.i + 1][startS.j] != 'F'
+            && mat[startS.i + 1][startS.j] != '7')
+        {
+            que.Enqueue(new Tuple<Pos2D, List<Pos2D>>(new(startS.i + 1, startS.j), [new(startS.i, startS.j)]));
+        }
+
+        //Left
+        if (startS.j - 1 >= 0
+            && mat[startS.i][startS.j - 1] != '.'
+            && mat[startS.i][startS.j - 1] != '|'
+            && mat[startS.i][startS.j - 1] != 'J'
+            && mat[startS.i][startS.j - 1] != '7')
+        {
+            que.Enqueue(new Tuple<Pos2D, List<Pos2D>>(new(startS.i, startS.j - 1), [new(startS.i, startS.j)]));
+        }
+
+        //Right
+        if (startS.j + 1 < COLS
+            && mat[startS.i][startS.j + 1] != '.'
+            && mat[startS.i][startS.j + 1] != '|'
+            && mat[startS.i][startS.j + 1] != 'L'
+            && mat[startS.i][startS.j + 1] != 'F')
+        {
+            que.Enqueue(new Tuple<Pos2D, List<Pos2D>>(new(startS.i, startS.j + 1), [new(startS.i, startS.j)]));
+        }
+
+        // paths
+
+        List<List<Pos2D>> loopPaths = [];
+        // traverse
+        while (que.Count > 0)
+        {
+            int curLayElementCount = que.Count;
+
+            Pos2D? loopNode = ContainsDuplicatedElements(que);
+
+            // each layer
+            for (int L = 0; L < curLayElementCount; L++)
+            {
+                Tuple<Pos2D, List<Pos2D>> q = que.Dequeue();
+                int i = q.Item1.i;
+                int j = q.Item1.j;
+
+                List<Pos2D> curPath = q.Item2.ToList();
+                curPath.Add(q.Item1);
+
+                if (null != loopNode && i == loopNode.i && j == loopNode.j)
+                {
+                    loopPaths.Add(curPath);
+                }
+
+                if (i < 0 || visited[i, j])
+                {
+                    continue;
+                }
+
+                visited[i, j] = true;
+
+                if (mat[i][j] == 'F')
+                {
+                    // j+1
+                    if (j + 1 < COLS && !visited[i, j + 1] && mat[i][j + 1] != '.')
                     {
-                        isInside = !isInside;
+                        que.Enqueue(new Tuple<Pos2D, List<Pos2D>>(new(i, j + 1), curPath));
                     }
-                    break;
-
-                case '7':
-                    if (prevB != 'L')
+                    //i+1
+                    if (i + 1 < ROWS && !visited[i + 1, j] && mat[i + 1][j] != '.')
                     {
-                        isInside = !isInside;
+                        que.Enqueue(new Tuple<Pos2D, List<Pos2D>>(new(i + 1, j), curPath));
                     }
-                    break;
-
-                default:
-                    break;
-            }
-
-            // update previous boundary type
-            if (curB != '-')
-            {
-                prevB = curB;
+                }
+                else
+                if (mat[i][j] == 'J')
+                {
+                    // j-1
+                    if (j - 1 >= 0 && !visited[i, j - 1] && mat[i][j - 1] != '.')
+                    {
+                        que.Enqueue(new Tuple<Pos2D, List<Pos2D>>(new(i, j - 1), curPath));
+                    }
+                    //i-1
+                    if (i - 1 >= 0 && !visited[i - 1, j] && mat[i - 1][j] != '.')
+                    {
+                        que.Enqueue(new Tuple<Pos2D, List<Pos2D>>(new(i - 1, j), curPath));
+                    }
+                }
+                else
+                    if (mat[i][j] == '7')
+                {
+                    // j-1
+                    if (j - 1 >= 0 && !visited[i, j - 1] && mat[i][j - 1] != '.')
+                    {
+                        que.Enqueue(new Tuple<Pos2D, List<Pos2D>>(new(i, j - 1), curPath));
+                    }
+                    //i+1
+                    if (i + 1 < ROWS && !visited[i + 1, j] && mat[i + 1][j] != '.')
+                    {
+                        que.Enqueue(new Tuple<Pos2D, List<Pos2D>>(new(i + 1, j), curPath));
+                    }
+                }
+                else
+                    if (mat[i][j] == 'L')
+                {
+                    // j+1
+                    if (j + 1 < COLS && !visited[i, j + 1] && mat[i][j + 1] != '.')
+                    {
+                        que.Enqueue(new Tuple<Pos2D, List<Pos2D>>(new(i, j + 1), curPath));
+                    }
+                    //i-1
+                    if (i - 1 >= 0 && !visited[i - 1, j] && mat[i - 1][j] != '.')
+                    {
+                        que.Enqueue(new Tuple<Pos2D, List<Pos2D>>(new(i - 1, j), curPath));
+                    }
+                }
+                else
+                    if (mat[i][j] == '|')
+                {
+                    //i-1
+                    if (i - 1 >= 0 && !visited[i - 1, j] && mat[i - 1][j] != '.')
+                    {
+                        que.Enqueue(new Tuple<Pos2D, List<Pos2D>>(new(i - 1, j), curPath));
+                    }
+                    //i+1
+                    if (i + 1 < ROWS && !visited[i + 1, j] && mat[i + 1][j] != '.')
+                    {
+                        que.Enqueue(new Tuple<Pos2D, List<Pos2D>>(new(i + 1, j), curPath));
+                    }
+                }
+                else
+                    if (mat[i][j] == '-')
+                {
+                    // j-1
+                    if (j - 1 >= 0 && !visited[i, j - 1] && mat[i][j - 1] != '.')
+                    {
+                        que.Enqueue(new Tuple<Pos2D, List<Pos2D>>(new(i, j - 1), curPath));
+                    }
+                    // j+1
+                    if (j + 1 < COLS && !visited[i, j + 1] && mat[i][j + 1] != '.')
+                    {
+                        que.Enqueue(new Tuple<Pos2D, List<Pos2D>>(new(i, j + 1), curPath));
+                    }
+                }
             }
         }
-        else
+
+        // two longest paths
+        List<Pos2D> loop1 = loopPaths.Last();
+        List<Pos2D> loop2 = loopPaths[^2];
+
+        //find boundary elements
+        int[,] bound = new int[ROWS, COLS];
+        foreach (Pos2D b in loop1)
         {
-            // set outside as 2
-            if (!isInside)
+            bound[b.i, b.j] = 1;
+        }
+        foreach (Pos2D b in loop2)
+        {
+            bound[b.i, b.j] = 1;
+        }
+
+        return bound;
+    }
+
+    private static Pos2D? ContainsDuplicatedElements(Queue<Tuple<Pos2D, List<Pos2D>>> que)
+    {
+        HashSet<Pos2D> tuples = [];
+        foreach (Tuple<Pos2D, List<Pos2D>> item in que)
+        {
+            if (tuples.Contains(item.Item1))
             {
-                B[r, j] = 2;
+                return item.Item1;
+            }
+
+            tuples.Add(item.Item1);
+        }
+
+        return null;
+    }
+
+    /**
+         mat:   2d matrix, original input
+         bound: 2d matrix: 0 - non-boundary; 1 - boundary
+
+         result: check all non-boundary elements, and set them to 2 if outside the boundary loop.
+         */
+
+    private static void FillByRayCasting(string[] mat, int[,] boundMat)
+    {
+        int numRows = boundMat.GetLength(0);
+        for (int i = 0; i < numRows; i++)
+        {
+            RayCasting(mat, boundMat, i);
+        }
+    }
+
+    /*
+     * 1: bound
+     * 2: outside
+     * 3: inside
+     */
+
+    private static void RayCasting(string[] mat, int[,] boundMat, int i)
+    {
+        bool isInside = false;
+        char prevB = ' ';
+        char curB;
+
+        int numColumns = boundMat.GetLength(1);
+        for (int j = 0; j < numColumns; j++)
+        {
+            // is bounday
+            if (boundMat[i, j] == 1)
+            {
+                curB = mat[i][j];
+                switch (curB)
+                {
+                    case '|':
+                    case 'F':
+                    case 'L':
+                    case 'S':
+                        isInside = !isInside;
+                        break;
+
+                    case 'J':
+                        if (prevB != 'F')
+                        {
+                            isInside = !isInside;
+                        }
+                        break;
+
+                    case '7':
+                        if (prevB != 'L')
+                        {
+                            isInside = !isInside;
+                        }
+                        break;
+
+                    default:
+                        break;
+                }
+
+                // update previous boundary type
+                if (curB != '-')
+                {
+                    prevB = curB;
+                }
+            }
+            else
+            {
+                // set outside as 2
+                if (!isInside)
+                {
+                    boundMat[i, j] = 2;
+                }
             }
         }
     }
-}
-
-bool IsEnclosedByLoop(int[,] matrix, int row, int col)
-{
-    int rows = matrix.GetLength(0);
-    int cols = matrix.GetLength(1);
-    if (row < 0 || col < 0 || row >= rows || col >= cols)
-    {
-        return true; // Encountered the boundary, so it's inside
-    }
-
-    if (matrix[row, col] == 1)
-    {
-        return true; // Encountered the loop, so it's inside
-    }
-
-    if (matrix[row, col] != 0)
-    {
-        return false; // Already marked cell, so not part of the inside area being checked
-    }
-
-    matrix[row, col] = -2; // Temporary mark to avoid re-checking this cell
-
-    // Check all four directions
-    bool enclosed = IsEnclosedByLoop(matrix, row + 1, col)
-                    && IsEnclosedByLoop(matrix, row - 1, col)
-                    && IsEnclosedByLoop(matrix, row, col + 1)
-                    && IsEnclosedByLoop(matrix, row, col - 1);
-
-    if (!enclosed)
-    {
-        matrix[row, col] = 0; // Reset if not enclosed
-    }
-
-    return enclosed;
 }
