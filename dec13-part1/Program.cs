@@ -1,68 +1,9 @@
-﻿using System.Diagnostics;
+﻿using AocLib.DataTypes;
+using System.Diagnostics;
 
-public class DualMatrix<T>
-{
-    private readonly T[][] _matrix;
-    private readonly T[][] _transposedMatrix;
-    private readonly int _rows;
-    private readonly int _columns;
-
-    public int Rows => _rows;
-
-    public int Columns => _columns;
-
-    public DualMatrix(int rows, int columns)
-    {
-        this._rows = rows;
-        this._columns = columns;
-
-        _matrix = new T[rows][];
-        _transposedMatrix = new T[columns][];
-
-        for (int i = 0; i < rows; i++)
-        {
-            _matrix[i] = new T[columns];
-        }
-
-        for (int j = 0; j < columns; j++)
-        {
-            _transposedMatrix[j] = new T[rows];
-        }
-    }
-
-    public void Set(int row, int column, T value)
-    {
-        _matrix[row][column] = value;
-        _transposedMatrix[column][row] = value;
-    }
-
-    public T[] Row(int row)
-    {
-        return _matrix[row];
-    }
-
-    public T[] Column(int column)
-    {
-        return _transposedMatrix[column];
-    }
-
-    public void SetRow(int row, T[] newRowValues)
-    {
-        ArgumentNullException.ThrowIfNull(newRowValues);
-
-        if (newRowValues.Length != Columns)
-        {
-            throw new ArgumentException("Length of newRowValues must be equal to the number of columns");
-        }
-
-        for (int col = 0; col < Columns; col++)
-        {
-            _matrix[row][col] = newRowValues[col];
-            _transposedMatrix[col][row] = newRowValues[col];
-        }
-    }
-}
-
+/// <summary>
+/// Dynamic programming
+/// </summary>
 internal class Program
 {
     private static void Main(string[] args)
@@ -78,6 +19,7 @@ internal class Program
         {
             Console.WriteLine($"({mat.Rows}, {mat.Columns})");
 
+            // convert each row into a long value
             long[] rowValues = ConvertToRowValues(mat);
             (int hStart, int hMaxLength) = FineLongestPalindromeByMirror(rowValues);
 
@@ -115,7 +57,6 @@ internal class Program
 
         sw.Stop();
 
-        //40934, 49065, 53413, 39911,40006
         Console.WriteLine($"Result = {result}");
         Console.WriteLine($"Time = {sw.Elapsed.TotalSeconds} seconds");
     }
@@ -125,7 +66,7 @@ internal class Program
     {
         int N = values.Length;
         int maxLength = 1;
-        int start = 0;
+        int startIndex = 0;
 
         // dp[i][j] is true if values[i,j] is a Palindrome
         bool[,] dp = new bool[N, N];
@@ -144,7 +85,7 @@ internal class Program
             if (dp[i, i + 1]
                 && (i + 2 == N || i == 0))
             {
-                start = i;
+                startIndex = i;
                 maxLength = 2;
             }
         }
@@ -160,13 +101,13 @@ internal class Program
                 if (dp[i, j] && L % 2 == 0
                     && (i + L == N || i == 0))
                 {
-                    start = i;
+                    startIndex = i;
                     maxLength = L;
                 }
             }
         }
 
-        return (start, maxLength);
+        return (startIndex, maxLength);
     }
 
     private static long[] ConvertToColValues(DualMatrix<char> mat)

@@ -1,67 +1,5 @@
-﻿using System.Diagnostics;
-
-public class DualMatrix<T>
-{
-    private readonly T[][] _matrix;
-    private readonly T[][] _transposedMatrix;
-    private readonly int _rows;
-    private readonly int _columns;
-
-    public int Rows => _rows;
-
-    public int Columns => _columns;
-
-    public DualMatrix(int rows, int columns)
-    {
-        this._rows = rows;
-        this._columns = columns;
-
-        _matrix = new T[rows][];
-        _transposedMatrix = new T[columns][];
-
-        for (int i = 0; i < rows; i++)
-        {
-            _matrix[i] = new T[columns];
-        }
-
-        for (int j = 0; j < columns; j++)
-        {
-            _transposedMatrix[j] = new T[rows];
-        }
-    }
-
-    public void Set(int row, int column, T value)
-    {
-        _matrix[row][column] = value;
-        _transposedMatrix[column][row] = value;
-    }
-
-    public T[] Row(int row)
-    {
-        return _matrix[row];
-    }
-
-    public T[] Column(int column)
-    {
-        return _transposedMatrix[column];
-    }
-
-    public void SetRow(int row, T[] newRowValues)
-    {
-        ArgumentNullException.ThrowIfNull(newRowValues);
-
-        if (newRowValues.Length != Columns)
-        {
-            throw new ArgumentException("Length of newRowValues must be equal to the number of columns");
-        }
-
-        for (int col = 0; col < Columns; col++)
-        {
-            _matrix[row][col] = newRowValues[col];
-            _transposedMatrix[col][row] = newRowValues[col];
-        }
-    }
-}
+﻿using AocLib.DataTypes;
+using System.Diagnostics;
 
 internal class Program
 {
@@ -77,6 +15,7 @@ internal class Program
         foreach (DualMatrix<char> mat in dataMats)
         {
             Console.WriteLine($"({mat.Rows}, {mat.Columns})");
+
             // check horizonal
             long[] rowValues = ConvertToRowValues(mat);
             int r = GetSplitLocation(rowValues);
@@ -99,14 +38,13 @@ internal class Program
 
         sw.Stop();
 
-        //9335, 38691 (high), 29684, 41800, 41878, 28627
         Console.WriteLine($"Result = {result}");
         Console.WriteLine($"Time = {sw.Elapsed.TotalSeconds} seconds");
     }
 
     private static int GetSplitLocation(long[] values)
     {
-        int r = 0;
+        int splitLoc = 0;
         for (int i = 1; i < values.Length; i++)
         {
             long[] up = values.Take(i).Reverse().ToArray();
@@ -119,12 +57,12 @@ internal class Program
 
             if (IsOneBitDiff(up, down))
             {
-                r = i;
+                splitLoc = i;
                 break;
             }
         }
 
-        return r;
+        return splitLoc;
     }
 
     private static bool IsOneBitDiff(long[] values1, long[] values2)
@@ -138,14 +76,15 @@ internal class Program
             }
             long v1 = values1[i];
             long v2 = values2[i];
-
-            long n = v1 ^ v2;
-            if (0 == n) //same
+            if (v1 == v2)
             {
                 continue;
             }
 
-            if (n > 0 && (n & (n - 1)) == 0) //one bit diff
+            long n = v1 ^ v2;
+            bool isOneBitDiff = (n > 0 && (n & (n - 1)) == 0);
+
+            if (isOneBitDiff) //one bit diff
             {
                 onebitDiff_Count++;
             }
@@ -156,12 +95,6 @@ internal class Program
         }
 
         return onebitDiff_Count == 1;
-    }
-
-    private static bool IsOneBitDiff(long v1, long v2)
-    {
-        long n = v1 ^ v2;
-        return n > 0 && (n & (n - 1)) == 0;
     }
 
     private static long[] ConvertToColValues(DualMatrix<char> mat)

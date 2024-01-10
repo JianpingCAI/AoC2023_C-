@@ -1,14 +1,12 @@
 ﻿using System.Diagnostics;
 using System.Text;
 
-// 1537505634471
-
 Stopwatch sw = Stopwatch.StartNew();
 string filePath = "input.txt";
 string[] lines = File.ReadAllLines(filePath);
 
 long result = 0;
-const int T = 5;
+const int COUNT_FOLDED = 5;
 
 // input
 
@@ -18,19 +16,19 @@ List<Tuple<char[], int[]>> inputList = new(lines.Length);
 for (int i = 0; i < lines.Length; i++)
 {
     string line = lines[i];
-    List<string> record = line.Split(' ').ToList();
+    List<string> record = [.. line.Split(' ')];
     int[] nums = record.Last().Split(',').Select(int.Parse).ToArray();
 
     StringBuilder sb = new();
-    for (int j = 0; j < T; j++)
+    for (int j = 0; j < COUNT_FOLDED; j++)
     {
         sb.Append(record[0]);
         sb.Append('?');
     }
     sb.Remove(sb.Length - 1, 1);
 
-    int[] duplicatedCounts = new int[nums.Length * T];
-    for (int j = 0; j < T; j++)
+    int[] duplicatedCounts = new int[nums.Length * COUNT_FOLDED];
+    for (int j = 0; j < COUNT_FOLDED; j++)
     {
         Array.Copy(nums, 0, duplicatedCounts, j * nums.Length, nums.Length);
     }
@@ -70,19 +68,20 @@ result = counts.Sum();
 
 #endregion parallel version
 
-long GetFeasibleCount(char[] cfg, int[] nums, Dictionary<string, long> cache)
+// recursive
+long GetFeasibleCount(char[] record, int[] nums, Dictionary<string, long> cache)
 {
-    if (cfg.Length == 0)
+    if (record.Length == 0)
     {
         return nums.Length == 0 ? 1 : 0;
     }
     if (nums.Length == 0)
     {
-        return cfg.Contains('#') ? 0 : 1;
+        return record.Contains('#') ? 0 : 1;
     }
 
-    string key = ToString(cfg, nums);
-    if (cache.TryGetValue(key, out long value))
+    string visited = ToString(record, nums);
+    if (cache.TryGetValue(visited, out long value))
     {
         return value;
     }
@@ -90,21 +89,21 @@ long GetFeasibleCount(char[] cfg, int[] nums, Dictionary<string, long> cache)
     long count = 0;
 
     // consider '?' as '.'
-    if (cfg[0] == '.' || cfg[0] == '?')
+    if (record[0] == '.' || record[0] == '?')
     {
-        count += GetFeasibleCount(cfg.Skip(1).ToArray(), nums, cache);
+        count += GetFeasibleCount(record.Skip(1).ToArray(), nums, cache);
     }
 
     // consider '?' as '#'
-    if (cfg[0] == '#' || cfg[0] == '?')
+    if (record[0] == '#' || record[0] == '?')
     {
         // match the first batch of '#'s
-        if (nums[0] <= cfg.Length
-            && !cfg.Take(nums[0]).Contains('.') //.All(x => x == '#') wrong
-            && (nums[0] == cfg.Length || cfg[nums[0]] != '#')//!!!
+        if (nums[0] <= record.Length
+            && !record.Take(nums[0]).Contains('.') //should be all # (.All(x => x == '#') wrong)
+            && (nums[0] == record.Length || record[nums[0]] != '#')//!!! no succeeded #
             )
         {
-            count += GetFeasibleCount(cfg.Skip(nums[0] + 1).ToArray(), nums.Skip(1).ToArray(), cache);
+            count += GetFeasibleCount(record.Skip(nums[0] + 1).ToArray(), nums.Skip(1).ToArray(), cache);
         }
         //else
         //{
@@ -112,17 +111,17 @@ long GetFeasibleCount(char[] cfg, int[] nums, Dictionary<string, long> cache)
         //}
     }
 
-    cache[key] = count;
+    cache[visited] = count;
     return count;
 }
 
 ///
 /// You cannot use a Tuple<char[], int[]> as a key of a Dictionary directly in C# because Tuple types are not suitable for use as keys in dictionaries due to their default implementations of GetHashCode and Equals. The default implementations of these methods rely on reference equality, which means that two different tuples with the same elements would not be considered equal as keys.
 ///
-string ToString(char[] cfg, int[] nums)
+string ToString(char[] record, int[] nums)
 {
     StringBuilder sb = new();
-    sb.Append(string.Join("", cfg));
+    sb.Append(string.Join("", record));
     sb.Append(string.Join("", nums));
 
     return sb.ToString();

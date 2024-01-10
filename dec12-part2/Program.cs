@@ -49,21 +49,6 @@ foreach (Tuple<char[], int[]> inputPair in inputList)
     Console.WriteLine($"Count = {tempCount}");
 }
 
-//long[] results = new long[inputList.Count];
-//Parallel.For(0, inputList.Count, i =>
-//{
-//    int tempCount = GetFeasibleArrangeCount(inputList[i].Item1, inputList[i].Item2);
-
-//    results[i] = tempCount;
-
-//    Console.WriteLine($"Count = {tempCount}");
-//});
-
-//foreach (var r in results)
-//{
-//    result += r;
-//}
-
 #region get feasible count
 
 int GetFeasibleArrangeCount(char[] record, int[] counts)

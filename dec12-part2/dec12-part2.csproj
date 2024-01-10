@@ -9,16 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Program_bk.cs" />
-    <Compile Remove="Program_bk2.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Program_bk.cs" />
-    <None Include="Program_bk2.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="input.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

@@ -26,11 +26,12 @@ int GetArrangementCount(char[] record, int[] counts)
 {
     int count = 0;
 
-    List<char[]> possibles = [];
+    List<char[]> possibleArrangements = [];
 
-    GetPossibleArrangements(possibles, record, 0);
+    // brute force: get all possible combinations
+    GetPossibleArrangements(possibleArrangements, record, 0);
 
-    foreach (char[] possible in possibles)
+    foreach (char[] possible in possibleArrangements)
     {
         if (IsFeasibleArrangement(possible, counts))
         {
@@ -41,33 +42,33 @@ int GetArrangementCount(char[] record, int[] counts)
     return count;
 }
 
-void GetPossibleArrangements(List<char[]> possibles, char[] record, int i)
+// recursive
+void GetPossibleArrangements(List<char[]> possibleArrangements, char[] record, int i)
 {
     if (i > record.Length - 1)
     {
-        possibles.Add(record);
+        possibleArrangements.Add(record);
         return;
     }
 
     if (record[i] == '?')
     {
-        char[] copy1 = new char[record.Length];
-        Array.Copy(record, copy1, record.Length);
-        char[] copy2 = new char[record.Length];
-        Array.Copy(record, copy2, record.Length);
+        char[] copy1 = record.ToArray();
+        char[] copy2 = record.ToArray();
 
+        // consider '?' as '.'
         copy1[i] = '.';
-        GetPossibleArrangements(possibles, copy1, i + 1);
+        GetPossibleArrangements(possibleArrangements, copy1, i + 1);
 
+        // consider '?' as '#'
         copy2[i] = '#';
-        GetPossibleArrangements(possibles, copy2, i + 1);
+        GetPossibleArrangements(possibleArrangements, copy2, i + 1);
     }
     else if (record[i] == '.' || record[i] == '#')
     {
-        char[] copy1 = new char[record.Length];
-        Array.Copy(record, copy1, record.Length);
+        char[] copy1 = record.ToArray();
 
-        GetPossibleArrangements(possibles, copy1, i + 1);
+        GetPossibleArrangements(possibleArrangements, copy1, i + 1);
     }
 }
 
